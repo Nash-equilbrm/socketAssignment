@@ -16,7 +16,10 @@ KILL_PROCESS_VIA_NAME = "KILL PROCESS VIA NAME"
 KEY_LOGGING ="KEY LOG"
 SHUTDOWN = "SHUTDOWN"
 CANCEL_SHUTDOWN = "CANCEL SHUTDOWN"
-
+SEND_FILE = "SEND FILE"
+SEND_REG_FILE = "SEND REG FILE"
+CREATE_REG_KEY = "CREATE REG KEY"
+GET_KEY_VALUE = "GET KEY VALUE"
 
 
 client = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
@@ -31,6 +34,14 @@ def send(msg):
     client.send(message)
    
     #print(client.recv(1024).decode(FORMAT))
+
+
+def send_file(filename):
+    with open(filename + ".reg","r") as file:
+        client.send(filename.encode(FORMAT))
+        content = file.read()
+        send(content)
+    
 
 
 def Execute():
@@ -95,7 +106,30 @@ def Execute():
         elif msg == CANCEL_SHUTDOWN:
             receiving_msg = client.recv(1024).decode(FORMAT)
             print(f"[SERVER] " + receiving_msg)
+
+        elif msg ==SEND_REG_FILE:
+            filename = input("Input filename: ")
+            try:
+                send_file(filename)
+                receiving_msg = client.recv(1024).decode(FORMAT)
+                print(f"[SERVER] " + receiving_msg)
+            except IOError:
+                print("FILE NOT FOUND")
+                client.send("NO FILE SENT!".encode(FORMAT))
+                receiving_msg = client.recv(1024).decode(FORMAT)
+                print(f"[SERVER] " + receiving_msg)
+
+        elif msg == GET_KEY_VALUE:
+            path = input("Input path: ")
+            client.send(path.encode(FORMAT))
+            name = input("Input name: ")
+            client.send(name.encode(FORMAT))
+            receiving_msg = client.recv(1024).decode(FORMAT)
+            print(f"[SERVER] " + receiving_msg)
            
+            
+
+
         else:
             receiving_msg = client.recv(1024).decode(FORMAT)
             print(f"[SERVER] " + receiving_msg)
