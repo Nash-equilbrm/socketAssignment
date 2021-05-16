@@ -27,7 +27,8 @@ SEND_FILE = "SEND FILE"
 SEND_REG_FILE = "SEND REG FILE"
 CREATE_REG_KEY = "CREATE REG KEY"
 GET_KEY_VALUE = "GET KEY VALUE"
-
+ADD_NEW_KEY = "ADD NEW KEY"
+DEL_KEY = "DELETE KEY"
 
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -137,11 +138,34 @@ def handle_client(conn, addr):
                 path = conn.recv(1024).decode(FORMAT)
                 name = conn.recv(1024).decode(FORMAT)
                 res = get_registry_value(path,name)
-                if res == "Invalid path!":
+                if res == "ERROR: INVALID PATH":
                     reply = res
                 else :
                     reply += path+ "   "+name+"    "+res
 
+            elif msg == ADD_NEW_KEY:
+                path = conn.recv(1024).decode(FORMAT)
+                hkey, sub_key = getKeyFromPath(path)
+                if hkey is None:
+                    reply += "ERROR: INVALID PATH"
+                else:
+                    try:
+                        os.system("reg add "+path)
+                        reply += "ADD REGISTRY KEY SUCCESSFULLY"
+                    except :
+                        reply += "ERROR!"
+
+            elif msg == DEL_KEY:
+                path = conn.recv(1024).decode(FORMAT)
+                hkey, sub_key = getKeyFromPath(path)
+                if hkey is None:
+                    reply += "ERROR: INVALID PATH"
+                else:
+                    try:
+                        os.system("reg delete "+path + " /f")
+                        reply += "DELETE REGISTRY KEY SUCCESSFULLY"
+                    except :
+                        reply += "ERROR!"
 
 
             elif msg == DISCONNECT_MESSAGE:
@@ -170,7 +194,7 @@ def start():
 
 
     
-print("[STARTING] server is starting ...")
-start()
+# print("[STARTING] server is starting ...")
+# start()
 
 # C:\Users\MSI-NK\OneDrive\Máy tính\Code\DoAnSocket

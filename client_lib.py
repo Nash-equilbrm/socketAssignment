@@ -10,7 +10,9 @@ ADDR = (SERVER,PORT)
 DISCONNECT_MESSAGE = "DISCONNECT!"
 TAKE_SCREEN_SHOT = "TAKE SCREENSHOT"
 RUNNING_PROCESS ="CHECK RUNNING PROCESS"
-STOP_LISTING = "STOP LISTING"
+STOP_LISTING = "STOP"
+START_LISTING = "START LISTING"
+
 KILL_PROCESS_VIA_PID = "KILL PROCESS VIA PID"
 KILL_PROCESS_VIA_NAME = "KILL PROCESS VIA NAME"
 KEY_LOGGING ="KEY LOG"
@@ -22,7 +24,7 @@ CREATE_REG_KEY = "CREATE REG KEY"
 GET_KEY_VALUE = "GET KEY VALUE"
 ADD_NEW_KEY = "ADD NEW KEY"
 DEL_KEY = "DELETE KEY"
-
+START_PROCESS = "START PROCESS"
 
 
 
@@ -39,13 +41,29 @@ def send(msg):
 
     #print(client.recv(1024).decode(FORMAT))
 
+def send1(conn,msg):
+    message = msg.encode(FORMAT)
+    msg_length = len(message)
+    send_length = str(msg_length).encode(FORMAT)
+    send_length += b' ' * (HEADER - len(send_length))
+    conn.send(send_length)
+    conn.send(message)
+
+def recv1(conn):
+    msg_length = conn.recv(HEADER).decode(FORMAT)
+    if msg_length:
+        msg_length = int(msg_length)
+        msg = conn.recv(msg_length).decode(FORMAT)
+        return msg
+    return ""
+
 
 def send_file(filename):
     with open(filename + ".reg","r") as file:
         client.send(filename.encode(FORMAT))
         content = file.read()
         send(content)
-    
+
 
 
 def Execute():

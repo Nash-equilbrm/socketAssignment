@@ -50,6 +50,7 @@ def kill_process_by_name(process_name):
 
 
 
-
+# f= wmi.WMI()
+# print(f.Win32_Process()[2])
 
 
