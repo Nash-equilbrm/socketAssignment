@@ -4,7 +4,8 @@ from tkinter import ttk
 import tkinter as tk
 import socket
 import threading
-
+from PIL import Image
+import numpy as np
 HEADER = 64
 PORT = 5050
 FORMAT = 'utf-8'
@@ -103,7 +104,42 @@ def recv_file(conn, filename):
 
 
 
-# def send_file(conn, filename):
+def send_img(conn,filename):
+    im = Image.open(filename,'r')
+    width,height = im.size
+    pic_data = list(im.getdata())
+    send1(conn,str(width))
+    send1(conn,str(height))
+    len =width*height
+    for i in range(len):
+        send1(conn,str(pic_data[i][0]))
+        send1(conn,str(pic_data[i][1]))            
+        send1(conn,str(pic_data[i][2]))            
+
+
+    
+
+def recv_img(conn,filename):
+    width = recv1(conn)
+    height = recv1(conn)
+    width = int(width)
+    height = int(height)
+    pixels = list()
+    for i in range(height):
+        tmp = list()
+        for j in range(width):
+            r = int(recv1(conn))
+            g = int(recv1(conn))
+            b = int(recv1(conn))
+            pxl =(r,g,b)
+            tmp.append(pxl)
+        pixels.append(tmp)
+    array = np.array(pixels, dtype=np.uint8)
+    new_img = Image.fromarray(array)
+    new_img.save(filename)
+
+
+
 
 
 
@@ -500,7 +536,9 @@ def exit(event):
 # Take screenshot
 def doTakeScreenshot(event):
     send(TAKE_SCREEN_SHOT)
-    recv_file(client,"ScreenShotFromServer.png")
+    # recv_file(client,"ScreenShotFromServer.png")
+    recv_img(client,"ScreenShotFromServer.png")
+    pass
 
 # Shutdown
 

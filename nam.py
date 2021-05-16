@@ -1,36 +1,19 @@
-import os
+from PIL import Image
+import numpy as np
+def get_Size(fileobject):
+    fileobject.seek(0,2) # move the cursor to the end of the file
+    size = fileobject.tell()
+    return size
+def read_img(filename):
+    im = Image.open(filename,'r')
+    width,height = im.size
+    print("width = "+str(width))
+    print("height = "+str(height))
+    pixels = list(im.getdata())
 
 
-def get_file_list(path):
-    os.system("cs "+ path)
-    os.system("rename *.xlsx *.csv")
-    files = os.listdir(path)
-    csv_files = []
-    for file in files:
-        x = len(file) - 4
-        if file[x:] == '.csv':
-            csv_files.append(file)
-    return csv_files
-    
+    print(len(pixels))
 
-
-
-def func(filename, del_this_row):
-    with open(filename, "r") as f:
-        lines = f.readlines()
-    with open(filename, "w") as f:
-        i = 0
-        for line in lines:
-            i += 1
-            if i!=del_this_row:
-                f.write(line)
-
-
-path = input("Nhap path chua cac file excel vao day: ")
-list_file = get_file_list(path)
-for file in list_file:
-    func(file,25)
-
-
-
-            
+# read_img("ScreenShot.png")
+a = 225
+print(str(a).__sizeof__())
