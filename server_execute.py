@@ -12,8 +12,8 @@ from Registry import*
 
 HEADER = 64
 PORT = 5050
-# SERVER = socket.gethostbyname(socket.gethostname())
-SERVER = "127.0.0.1"
+SERVER = socket.gethostbyname(socket.gethostname())
+# SERVER = "127.0.0.1"
 ADDR= (SERVER, PORT)
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = "DISCONNECT!"
@@ -67,20 +67,19 @@ def send_file(conn, filename):
     file = open(filename,"rb")
     size = get_Size(file)
     size = str(size)
-    print(size)
     file.close()
-    # conn.send(size.encode(FORMAT))
     send1(conn,size)
 
     with open(filename, "rb") as fp:
         # i=0
-        data = fp.read(1024)
+        data = fp.read(5)
         # print(f"{i}    {sys.getsizeof(data)}")
         while data:
             conn.send(data)
-            # i += 1
-            data = fp.read(1024)
-            # print(f"{i}    {sys.getsizeof(data)}")
+            
+            data = fp.read(5)
+        
+
 
 
             if not data:
@@ -137,6 +136,21 @@ def recv_img(conn,filename):
     new_img = Image.fromarray(array)
     new_img.save(filename)
 
+def send_file1(conn,filename):
+    file = open(filename,"rb")
+    size = get_Size(file)
+    
+    file.close()
+    send1(conn,str(size))
+    t = size/2
+    t = int(t)
+    with open(filename,'rb') as fp:
+        for i in range(t):
+            data = fp.read(2)
+            conn.send(data)
+
+
+
 
 def conn_recv_reg_file(conn):
     filename = conn.recv(1024).decode(FORMAT)
@@ -172,7 +186,8 @@ def handle_client(conn, addr):
                 
                 Take_Screenshot("ScreenShot.png")
                 # send_file(conn,"ScreenShot.png")
-                send_img(conn, "ScreenShot.png")
+                # send_img(conn, "ScreenShot.png")
+                send_file1(conn,"ScreenShot.png")
                     
 
 
@@ -242,15 +257,13 @@ def handle_client(conn, addr):
 
 
             elif msg == SHUTDOWN:
-                conn.send("Input time remained until shutdown: ".encode(FORMAT))
-                sec = conn.recv(1024).decode(FORMAT)
-                # reply += f"SERVER WILL SHUTDOWN IN {sec} SECONDS"
-                sec = int(sec)
+                sec = 40
+                send1(conn,f"Server shutdown in {40} seconds")
                 shutdown(sec)
 
             elif msg == CANCEL_SHUTDOWN:
                 cancel_shutdown()
-                # reply += "SHUTDOWN CANCELED"
+                
 
 
             elif msg == SEND_REG_FILE:
