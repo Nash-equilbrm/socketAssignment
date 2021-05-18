@@ -32,18 +32,3 @@ def cancel_shutdown():
         return
     os.system(cancel_str)
 
-# # def main():
-# #     print('Use Shutup To schedule your shutdown'.center(50, '='))
-# #     print('1.Automate Shutdown\n2.Cancel shutdown')
-# #     option = int(input('Option here: '))
-# #     if option == 1:
-# #         time = int(input('\nEnter time to shutdown in Minutes : '))
-# #         shutdown(time)
-# #     elif option == 2:
-# #         cancel_shutdown()
-# #         print('Shutdown successful canceled ...')
-# #     else:
-# #         print('Invalid option try again!!!\n')
-# #         main()
-
-# # main()
