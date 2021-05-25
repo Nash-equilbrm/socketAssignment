@@ -12,8 +12,8 @@ from Registry import*
 from tkinter import*
 HEADER = 64
 PORT = 5050
-# SERVER = socket.gethostbyname(socket.gethostname())
-SERVER = "127.0.0.1"
+SERVER = socket.gethostbyname(socket.gethostname())
+# SERVER = "127.0.0.1"
 ADDR= (SERVER, PORT)
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = "DISCONNECT!"
@@ -105,29 +105,33 @@ def handle_client(conn, addr):
 
 
             elif msg == RUNNING_PROCESS:
-                
-                list_proc = enum_running_process()
-                size = len(list_proc)
-                size = str(size)
-                if size =='0':
-                    send1(conn,'No running app!')
-                else:
-                    send1(conn,size)
-                    for app in list_proc:
-                        send1(conn,app[0])
-                        send1(conn,app[1])
-                        send1(conn,app[2])
+                def execute():
+                    list_proc = enum_running_process()
+                    size = len(list_proc)
+                    size = str(size)
+                    if size =='0':
+                        send1(conn,'No running app!')
+                    else:
+                        send1(conn,size)
+                        for app in list_proc:
+                            send1(conn,app[0])
+                            send1(conn,app[1])
+                            send1(conn,app[2])
+                sidequest_thread = threading.Thread(target= execute)
+                sidequest_thread.start()
                 
 
 
 
 
             elif msg == KILL_PROCESS_VIA_PID:
-                
-                pid = recv1(conn)
-                pid = int(pid)
-                process_killed = kill_process_by_id(pid)
-                send1(conn,str(process_killed))
+                def execute():
+                    pid = recv1(conn)
+                    pid = int(pid)
+                    process_killed = kill_process_by_id(pid)
+                    send1(conn,str(process_killed))
+                sidequest_thread = threading.Thread(target= execute)
+                sidequest_thread.start()
                 
             
 
@@ -136,7 +140,10 @@ def handle_client(conn, addr):
             
             elif msg == START_PROCESS:
                 proc = recv1(conn)
-                os.system(proc)
+                def execute():
+                    os.system(proc)
+                sidequest_thread = threading.Thread(target= execute)
+                sidequest_thread.start()
 
                 
             elif msg == KEYLOGGING:
@@ -216,18 +223,21 @@ def handle_client(conn, addr):
 
 
             elif msg == RUNNING_APP:
-                list_app = enum_running_app()
-                size = len(list_app)
-                if size > 0:
-                    size = str(size)
-                    send1(conn,size)
-                    for app in list_app:
-                        send1(conn,app[0])
-                        send1(conn,app[1])
-                        send1(conn,app[2])
-                    
-                else:
-                    send1(conn,"No running app!")
+                def execute():
+                    list_app = enum_running_app()
+                    size = len(list_app)
+                    if size > 0:
+                        size = str(size)
+                        send1(conn,size)
+                        for app in list_app:
+                            send1(conn,app[0])
+                            send1(conn,app[1])
+                            send1(conn,app[2])
+                        
+                    else:
+                        send1(conn,"No running app!")
+                sidequest_thread = threading.Thread(target= execute)
+                sidequest_thread.start()
                 
             
 

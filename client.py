@@ -9,8 +9,8 @@ import numpy as np
 HEADER = 64
 PORT = 5050
 FORMAT = 'utf-8'
-# SERVER = socket.gethostbyname(socket.gethostname())
-SERVER = "127.0.0.1"
+SERVER = socket.gethostbyname(socket.gethostname())
+# SERVER = "127.0.0.1"
 ADDR = (SERVER,PORT)
 DISCONNECT_MESSAGE = "DISCONNECT!"
 TAKE_SCREEN_SHOT = "TAKE SCREENSHOT"
