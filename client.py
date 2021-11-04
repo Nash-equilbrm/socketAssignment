@@ -1,14 +1,21 @@
+import os
 from tkinter import *
 import tkinter.messagebox as mbox 
 from tkinter import ttk, filedialog
 import tkinter as tk
 import socket
 import threading
-from PIL import Image
 import numpy as np
+import cv2, pickle,struct
+import PIL.Image, PIL.ImageTk
+
+
+TITLE = "Client "
+connected =False
 HEADER = 64
 PORT = 5050
 FORMAT = 'utf-8'
+
 SERVER = socket.gethostbyname(socket.gethostname())
 # SERVER = "127.0.0.1"
 ADDR = (SERVER,PORT)
@@ -34,7 +41,13 @@ GET_KEY_VALUE = "GET KEY VALUE"
 ADD_NEW_KEY = "ADD NEW KEY"
 DELETE_KEY = "DELETE KEY"
 SET_KEY_VALUE ="SET KEY VALUE"
-
+LIVE_SCREEN = "LIVE SCREEN"
+STOP_LIVE = "STOP LIVE"
+VIEW_FOLDER = "VIEW FOLDER"
+DELETE_FILE = "DELETE FILE"
+COPY_DIR = "COPY DIR"
+SHOW_MAC_ADDR = "SHOW MAC ADDR"
+LOG_OUT = "LOG OUT"
 
 
 client = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
@@ -115,21 +128,20 @@ def recv_file1(conn,filename):
             data = conn.recv(2)
             file.write(data)
 
+def PlaceWindow(window, window_width, window_height):
+    screen_width = window.winfo_screenwidth()
+    screen_height = window.winfo_screenheight()
+    x_cordinate = int((screen_width/2) - (window_width/2))
+    y_cordinate = int((screen_height/2) - (window_height/2))
+    window.geometry("{}x{}+{}+{}".format(window_width, window_height, x_cordinate, y_cordinate))
 
-
-
-
-
-
-TITLE = "Client "
-
-connected =False
-
-
+def CloseWindow(root):
+    root.destroy()
 
 
  #ProcessRunning------------------------------------------------------------------------------------------
 
+#PROCESSRUNNING-------------------------------------------------------------------------------------------
 def doProcessRunning():
     global connected
     if connected == True:
@@ -196,6 +208,7 @@ def doProcessRunning():
 
             RootPR_START.title(40*" "+"START")
             RootPR_START.geometry("400x50")
+            
             RootPR_START.resizable(0, 0)
             RootPR_START.grab_set()
             
@@ -205,28 +218,37 @@ def doProcessRunning():
             entry.place(x = 20, y = 15)
             buttonPR_START_InSide.place(x = 280, y = 15)
 
+        def Back():
+            CloseWindow(RootPR)
+
         #------------------------------------------------------
         RootPR = Toplevel(Client_windows)
-        RootPR.title(55*" "+"Process")
+        RootPR.title("Process")
+        PlaceWindow(RootPR, 730, 400)
         RootPR.grab_set()
+        RootPR.resizable(0,0)
+        
 
-        RootPR.geometry("500x350")
         
         #KILL
-        buttonPR_KILL = Button(RootPR, text = 'KILL',padx =33, pady=20, command= KILL_PR)
-        buttonPR_KILL.place(x =38, y =15)
+        buttonPR_KILL = Button(RootPR, text = 'KILL', width = 15, height = 4, command= KILL_PR)
+        buttonPR_KILL.place(x = 175, y = 20)
 
         #SHOW
-        buttonPR_SHOW = Button(RootPR, text = 'SHOW',padx =28, pady=20, command = SHOW_PR)
-        buttonPR_SHOW.place(x =140, y =15)
+        buttonPR_SHOW = Button(RootPR, text = 'SHOW', width = 15, height = 4, command = SHOW_PR)
+        buttonPR_SHOW.place(x = 290, y = 20)
 
         #DELETE
-        buttonPR_SHOW = Button(RootPR, text = 'DELETE',padx =27, pady=20, command = DELETE_PR)
-        buttonPR_SHOW.place(x =245, y =15)
+        buttonPR_SHOW = Button(RootPR, text = 'DELETE', width = 15, height = 4, command = DELETE_PR)
+        buttonPR_SHOW.place(x = 405, y = 20)
 
         #Start
-        buttonPR_SHOW = Button(RootPR, text = 'START',padx =33, pady=20, command= START_PR)
-        buttonPR_SHOW.place(x =350, y =15)
+        buttonPR_SHOW = Button(RootPR, text = 'START', width = 15, height = 4, command= START_PR)
+        buttonPR_SHOW.place(x = 520, y = 20) 
+
+        #BACK
+        Back_button = Button(RootPR, text = "BACK", width = 15, height = 4, command = Back)
+        Back_button.place(x = 60, y = 20)
 
         #Table
         tree =ttk.Treeview(RootPR, column=("c1", "c2", "c3"), show='headings')
@@ -234,16 +256,116 @@ def doProcessRunning():
         
         tree.bind('<Button-1>', "break")
     
-        tree.column("#1", anchor=tk.CENTER, minwidth=0, width=190, stretch= FALSE)
+        tree.column("#1", anchor=tk.CENTER, minwidth = 0, width = 260, stretch= FALSE)
         tree.heading("#1", text="Name Process")
-        tree.column("#2", anchor=tk.CENTER, minwidth=0, width=109 ,stretch=FALSE)
+        tree.column("#2", anchor=tk.CENTER, minwidth = 0, width = 157 ,stretch=FALSE)
         tree.heading("#2", text="ID Process")
-        tree.column("#3", anchor=tk.CENTER, minwidth=0, width=109, stretch=FALSE)
+        tree.column("#3", anchor=tk.CENTER, minwidth = 0, width = 157, stretch=FALSE)
         tree.heading("#3", text="Count Thread")
-        tree.place(x = 38, y = 100)
-        vsb.place(x=38+190+109+109, y=100, height=227)
+        tree.place(x = 60, y = 100, height = 250)
+        vsb.place(x = 635, y = 100, height = 250)
     else:
         mbox.showinfo(None,"No connection established!")
+
+
+#KEYSTROKE------------------------------------------------------------------------------------------------
+hooked = False
+def doKEYSTROKE():
+    global connected
+    if connected == True:
+
+        def HOOK():
+            global hooked
+            hooked=True
+            send1(client,KEYLOGGING)
+            
+        def A():
+            threading.Thread(target=HOOK).start()
+
+
+
+        def UNHOOK():  
+            global hooked
+            hooked = False
+            send1(client,STOP_KEYLOGGING)
+
+        def B():
+            threading.Thread(target=UNHOOK).start()
+
+
+
+        def PRINT():
+            global hooked
+            if hooked ==True:
+                send1(client,PRINT_KEYLOG)
+                key_log_string = recv1(client)
+                if key_log_string == "File not found":
+                    key_log_string =""
+                else:
+                    text.config(state="normal")
+                    text.insert('end',key_log_string)
+                    text.config(state="disabled")
+                   
+            else:
+                mbox.showinfo(None,"Keystroke is not hooked!")
+        def C():
+            threading.Thread(target=PRINT).start()
+        def DELETE():
+            text.delete(1.0,'end')
+        def D():
+            threading.Thread(target=DELETE).start()
+        def Back():
+            CloseWindow(RootK)
+
+        def LockKeyboard():
+            pass
+    
+        def unLockKeyboard():
+            pass
+
+
+        #-----------------------------------------------------------------------------------    
+
+        RootK = Toplevel(Client_windows)
+        RootK.title("Keystroke")
+        PlaceWindow(RootK, 730, 400)
+        RootK.grab_set()
+        RootK.resizable(0,0)
+
+        #HOOK
+        buttonK_HOOK = Button(RootK, text = 'Hook',width = 15, height = 3, command = A)
+        buttonK_HOOK.place(x = 60, y = 20)
+
+        #UNHOOK
+        buttonK_UNHOOK = Button(RootK, text = 'UnHook', width = 15, height = 3, command= B)
+        buttonK_UNHOOK.place(x = 175, y = 20)
+
+        #PRINT
+        buttonK_PRINT = Button(RootK, text = 'Print', width = 15, height = 3, command= C)
+        buttonK_PRINT.place(x = 520, y = 20)
+
+        #DELETE
+        buttonK_DELETE = Button(RootK, text = 'Lock Keyboard', width = 15, height = 3, command = LockKeyboard)
+        buttonK_DELETE.place(x = 290, y = 20)
+
+        #BACK
+        Back_button = Button(RootK, text = "Unlock Keyboard", width = 15, height = 3, command = unLockKeyboard)
+        Back_button.place(x = 405, y = 20)
+        
+        #BACK
+        Back_button = Button(RootK, text = "Back", width = 15, height = 2, command = Back)
+        Back_button.place(x = 175, y = 350)
+
+        #DELETE
+        buttonK_DELETE = Button(RootK, text = 'Delete', width = 15, height = 2, command= D)
+        buttonK_DELETE.place(x = 405, y = 350)       
+
+        #TABLE
+        text = Text(RootK)
+        text.place(x = 60, y = 90, width = 575, height = 250)
+    else:
+        mbox.showinfo(None,"No connection established!")
+
 
 #APPRunning-----------------------------------------------------------------------------------------------
 
@@ -316,119 +438,50 @@ def doAPPRunning():
             entry.place(x = 20, y = 15)
             buttonAR_START_InSide.place(x = 280, y = 15)
 
+        def Back():
+            CloseWindow(RootAR)
         #--------------------------------------------
         RootAR = Toplevel(Client_windows)
-        RootAR.title(55*" "+"ListApp")
+        RootAR.title("ListApp")
         RootAR.grab_set()
-        RootAR.geometry("500x350")
+        PlaceWindow(RootAR, 730, 400)
+        RootAR.resizable(0,0)
+
         #KILL
-        buttonAR_KILL = Button(RootAR, text = 'KILL',padx =33, pady=20,command= KILL_AR)
-        buttonAR_KILL.place(x =38, y =15)
+        buttonAR_KILL = Button(RootAR, text = 'KILL', width = 15, height = 4,command= KILL_AR)
+        buttonAR_KILL.place(x = 175, y = 20)
         #SHOW
-        buttonPR_SHOW = Button(RootAR, text = 'SHOW',padx =28, pady=20, command= SHOW_AR)
-        buttonPR_SHOW.place(x =140, y =15)
+        buttonPR_SHOW = Button(RootAR, text = 'SHOW', width = 15, height = 4, command= SHOW_AR)
+        buttonPR_SHOW.place(x = 290, y = 20)
         #DELETE
-        buttonPR_SHOW = Button(RootAR, text = 'DELETE',padx =27, pady=20, command= DELETE_AR)
-        buttonPR_SHOW.place(x =245, y =15)
+        buttonPR_SHOW = Button(RootAR, text = 'DELETE', width = 15, height = 4, command= DELETE_AR)
+        buttonPR_SHOW.place(x = 405, y = 20)
         #Start
-        buttonPR_SHOW = Button(RootAR, text = 'START',padx =33, pady=20, command= START_AR)
-        buttonPR_SHOW.place(x =350, y =15)
+        buttonPR_SHOW = Button(RootAR, text = 'START', width = 15, height = 4, command= START_AR)
+        buttonPR_SHOW.place(x = 520, y = 20)
         #Table
         tree =ttk.Treeview(RootAR, column=("c1", "c2", "c3"), show='headings')
         vsb = ttk.Scrollbar(RootAR, orient="vertical", command=tree.yview)
+
+        #BACK
+        Back_button = Button(RootAR, text = "Back", width = 15, height = 4, command = Back)
+        Back_button.place(x = 60, y = 20)
         
         tree.bind('<Button-1>', "break")
     
-        tree.column("#1", anchor=tk.CENTER, minwidth=0, width=190, stretch= FALSE)
+        tree.column("#1", anchor=tk.CENTER, minwidth=0, width=260, stretch= FALSE)
         tree.heading("#1", text="Name Application")
-        tree.column("#2", anchor=tk.CENTER, minwidth=0, width=109 ,stretch=FALSE)
+        tree.column("#2", anchor=tk.CENTER, minwidth=0, width=157 ,stretch=FALSE)
         tree.heading("#2", text="ID Application")
-        tree.column("#3", anchor=tk.CENTER, minwidth=0, width=109, stretch=FALSE)
+        tree.column("#3", anchor=tk.CENTER, minwidth=0, width=157, stretch=FALSE)
         tree.heading("#3", text="Count Thread")
-        tree.place(x = 38, y = 100)
-        vsb.place(x=38+190+109+109, y=100, height=227)
+        tree.place(x = 60, y = 100, height = 250)
+        vsb.place(x = 635, y = 100, height = 250)
     else:
         mbox.showinfo(None,"No connection established!")
 
-#KEYSTROKE------------------------------------------------------------------------------------------------
 
-
-hooked = False
-
-def doKEYSTROKE():
-    global connected
-    if connected == True:
-
-        def HOOK():
-            global hooked
-            hooked=True
-            send1(client,KEYLOGGING)
-            
-        def A():
-            threading.Thread(target=HOOK).start()
-
-
-
-        def UNHOOK():  
-            global hooked
-            hooked = False
-            send1(client,STOP_KEYLOGGING)
-
-        def B():
-            threading.Thread(target=UNHOOK).start()
-
-
-
-        def PRINT():
-            global hooked
-            if hooked ==True:
-                send1(client,PRINT_KEYLOG)
-                key_log_string = recv1(client)
-                if key_log_string == "File not found":
-                    mbox.showinfo(None,"Keystroke is not hooked!")
-                else:
-                    text.insert('end',key_log_string)
-                    # A()
-            else:
-                mbox.showinfo(None,"Keystroke is not hooked!")
-
-        def C():
-            threading.Thread(target=PRINT).start()
-        def DELETE():
-            text.delete(1.0,'end')
-        def D():
-            threading.Thread(target=DELETE).start()
-
-        #-----------------------------------------------------------------------------------    
-
-        RootK = Toplevel(Client_windows)
-        RootK.title(55*" "+"Keystroke")
-        RootK.grab_set()
-        RootK.geometry("500x350")
-        
-        #HOOK
-        buttonK_HOOK = Button(RootK, text = 'HOOK',padx =33, pady=20, command=A)
-        buttonK_HOOK.place(x =38, y =15)
-
-        #UNHOOK
-        buttonK_UNHOOK = Button(RootK, text = 'UNHOOK',padx =33, pady=20, command= B)
-        buttonK_UNHOOK.place(x =140, y =15)
-
-        #PRINT
-        buttonK_PRINT = Button(RootK, text = 'PRINT',padx =33, pady=20, command= C)
-        buttonK_PRINT.place(x =245, y =15)
-
-        #DELETE
-        buttonK_DELETE = Button(RootK, text = 'DELETE',padx =33, pady=20, command=D)
-        buttonK_DELETE.place(x =350, y =15)
-    
-        #TABLE
-        text = Text(RootK)
-        text.place(x = 38, y = 90, width = 425, height = 230)
-    else:
-        mbox.showinfo(None,"No connection established!")
-
-#FixRegistry----------------------------------------------------------------------------
+#FixRegistry----------------------------------------------------------------------------------------------
 def doFixRegistry():
     global connected
     if connected == True:
@@ -594,13 +647,17 @@ def doFixRegistry():
             if  s == " Delete value": DltValue()
             if  s == " Create key": CreateKey()
             if  s == " Delete key": DltKey()
-            
+
+        def Back():
+            CloseWindow(RootFR)            
 
 
         RootFR = Toplevel(Client_windows)
-        RootFR.title(55*" "+"Fix Keystroke")
+        RootFR.title("Fix Keystroke")
         RootFR.grab_set()
-        RootFR.geometry("500x420")
+        PlaceWindow(RootFR, 500, 420)
+        RootFR.resizable(0,0)
+
 
         #Browser---------------
         file_directory = Entry(RootFR)
@@ -661,12 +718,391 @@ def doFixRegistry():
 
         #Send, delete button
         Button_Send = Button(RootFR, text = 'Send', command=Send)
-        Button_Send.place (x = 110, y = 360, width = 100)
+        Button_Send.place (x = 200, y = 360, width = 100)
 
         Button_Delete = Button(RootFR, text = 'Delete', command= Delete)
-        Button_Delete.place (x = 280, y = 360, width = 100) 
+        Button_Delete.place (x = 320, y = 360, width = 100) 
+
+        #Back
+        Button_Back = Button(RootFR, text = 'Back', command = Back)
+        Button_Back.place(x = 80, y = 360, width = 100 )
+
     else:
         mbox.showinfo(None,"No connection established!")
+
+#LiveScreen-----------------------------------------------------------------------------------------------
+def doLiveScreen():
+    global connected
+    if connected == True:
+
+        send(LIVE_SCREEN)
+
+        def Back():
+            client.send('N'.encode(FORMAT))
+            CloseWindow(RootLS)
+
+        
+        #send(LIVE_SCREEN)
+        
+        
+
+
+
+        RootLS = Toplevel(Client_windows)
+        RootLS.title("LiveScreen")
+
+        windowWidth = 1100
+        windowHeight = 700
+
+        PlaceWindow(RootLS, windowWidth, windowHeight)        #Scale the window here
+        RootLS.resizable(0, 0)
+        RootLS.grab_set()
+
+        
+        app = Frame(RootLS, bg="white")
+        app.grid()
+        app.place(x= 200, y = 60)
+        # Create a label in the frame
+        lmain = Label(app)
+        lmain.grid()
+
+        lmain = Label(app)
+        lmain.grid()
+
+        def disable_event():
+            pass
+
+        # function for video streaming
+        def video_stream():
+            RootLS.protocol("WM_DELETE_WINDOW", disable_event)
+
+
+                
+            data = b""
+            payload_size = struct.calcsize("Q")
+
+            client.send('Y'.encode(FORMAT))
+
+
+            while len(data) < payload_size:
+                packet = client.recv(4*1024) # 4K
+                if not packet: break
+                data+=packet
+            packed_msg_size = data[:payload_size]
+            data = data[payload_size:]
+            msg_size = struct.unpack("Q",packed_msg_size)[0]
+            
+            while len(data) < msg_size:
+                data += client.recv(4*1024)
+            frame_data = data[:msg_size]
+            data  = data[msg_size:]
+            frame = pickle.loads(frame_data)
+            
+
+
+            cv2image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            img = PIL.Image.fromarray(cv2image)
+            imgtk = PIL.ImageTk.PhotoImage(image=img)
+            lmain.imgtk = imgtk
+            lmain.configure(image=imgtk)
+            lmain.after(1, video_stream) 
+
+
+        
+
+        Back_button = Button(RootLS, text = "Back", width = 25, height = 2, command = Back)
+        Back_button.place(x = 200, y = 30)
+        
+        
+
+        thread = threading.Thread(target=video_stream)
+        thread.start()
+        # video_stream()
+        
+                
+                
+        
+        RootLS.mainloop()
+    else:
+        mbox.showinfo(None,"No connection established!")
+
+
+    
+    
+    
+    
+
+#ShowFileManager------------------------------------------------------------------------------------------
+current_file=""
+current_directory=""
+def doShowFileExplorer():
+    global connected
+    if connected == True:
+
+        def BackToMenu():
+            CloseWindow(RootFE)
+        def Delete():
+            send(DELETE_FILE)
+            dir=""
+            if(current_file ==""):
+                dir = current_directory
+            else: dir = current_file
+            send1(client,dir)
+            print(dir)
+            reply = recv1(client)
+            if reply == "DONE":
+                tv.delete(*tv.get_children())
+
+                send(VIEW_FOLDER)
+                send(current_directory)
+
+                list_len = int(recv1(client))
+                
+                for i in range(list_len):
+                    name = recv1(client)
+                    is_dir = int(recv1(client))
+                    if is_dir == 1:
+                        tv.insert('','end', text='> '+name)
+                    else:
+                        tv.insert('','end', text=name)
+                mbox.showinfo(None,f"Deleted {dir}.")
+            elif reply == "FAIL":
+                mbox.showinfo(None,f"Error occurred while trying to delete {dir}.")
+
+        def Add():
+            pass
+
+        def Edit():
+            pass
+
+        def Send():
+            pass
+
+        def Copy():
+            send(COPY_DIR)
+            dir=""
+            if(current_file ==""):
+                dir = current_directory
+            else: dir = current_file
+            send1(client,dir)
+            reply = recv1(client)
+            if reply == "DONE":
+                tv.delete(*tv.get_children())
+
+                send(VIEW_FOLDER)
+                send(current_directory)
+
+                list_len = int(recv1(client))
+                
+                for i in range(list_len):
+                    name = recv1(client)
+                    is_dir = int(recv1(client))
+                    if is_dir == 1:
+                        tv.insert('','end', text='> '+name)
+                    else:
+                        tv.insert('','end', text=name)
+                mbox.showinfo(None,f"Copied {dir}.")
+            elif reply == "FAIL":
+                mbox.showinfo(None,f"Error occurred while trying to copy {dir}.")
+
+        def Backf():
+            global current_directory
+            if(current_directory==""):
+                return
+            elif (current_directory=='C:/' or current_directory == "D:/"):
+                tv.delete(*tv.get_children())
+                current_directory=""
+                SearchBox.config(state="normal")
+                SearchBox.delete('1.0','end')
+                SearchBox.config(state="disabled")
+                tv.insert('','end', text='> C:', open=True)
+                tv.insert('','end', text='> D:', open=True)
+
+            else:
+            
+                current_directory = current_directory[:(len(current_directory)-1)]
+                current_directory = current_directory[:(current_directory.rfind("/")+1)]
+                SearchBox.config(state="normal")
+                SearchBox.delete('1.0','end')
+                SearchBox.insert('end',current_directory)
+                SearchBox.config(state="disabled")
+
+                tv.delete(*tv.get_children())
+
+                send(VIEW_FOLDER)
+                send(current_directory)
+
+                list_len = int(recv1(client))
+                
+                
+                
+                for i in range(list_len):
+                    name = recv1(client)
+                    is_dir = int(recv1(client))
+                    if is_dir == 1:
+                        tv.insert('','end', text='> '+name)
+                    else:
+                        tv.insert('','end', text=name)
+
+    
+
+        
+        
+        def OnDoubleClick(event):
+            global current_file
+            global current_directory
+            current_directory =SearchBox.get("1.0","end-1c")
+            item = tv.selection()[0]
+            dir = tv.item(item,"text")
+            
+            if dir[0]=='>':     #Is folder
+                current_file =""
+                dir = dir[2:]
+                tv.delete(*tv.get_children())
+            
+                current_directory = current_directory + dir + "/"
+
+                send(VIEW_FOLDER)
+                send(current_directory)
+
+                list_len = int(recv1(client))
+                
+                
+                SearchBox.config(state="normal")
+                SearchBox.insert('end',dir)
+                if(list_len!=0):
+                    SearchBox.insert('end','/')
+                SearchBox.config(state="disabled")
+                
+
+                for i in range(list_len):
+                    name = recv1(client)
+                    is_dir = int(recv1(client))
+                    if is_dir == 1:
+                        tv.insert('','end', text='> '+name)
+                    else:
+                        tv.insert('','end', text=name)
+            else:
+                current_file = current_directory + dir
+            
+        
+        #Init TreeView
+        RootFE = Toplevel(Client_windows)
+        RootFE.title("FileManager")
+        PlaceWindow(RootFE,800, 550)
+        RootFE.resizable(0, 0)
+        RootFE.grab_set()
+
+        tv = ttk.Treeview(RootFE,show='tree')
+        ybar = tk.Scrollbar(RootFE,orient=tk.VERTICAL, command=tv.yview)
+        tv.configure(yscroll = ybar.set)
+
+        
+        
+        tv.bind("<Double-1>", OnDoubleClick)
+        directory='> C:'                                        #Change directory here 
+        tv.insert('','end', text=directory, open=True)
+        directory='> D:'                                        #Change directory here 
+        tv.insert('','end', text=directory, open=True)
+        
+        
+        
+        tv.place(x = 50, y = 150, height= 350, width= 700)
+        ybar.place(x = 750, y = 150, height = 350)
+
+        #Delete    
+        Del_button = Button(RootFE, text = "Delete", width = 15, height = 3, command = Delete)
+        Del_button.place(x = 165, y = 20)
+
+        #Add
+        Add_button = Button(RootFE, text = "Add", width = 15, height = 3, command = Add)
+        Add_button.place(x = 280, y = 20)
+
+        #Edit
+        Edit_button = Button(RootFE, text = "Edit", width = 15, height = 3, command = Edit)
+        Edit_button.place(x = 395, y = 20)
+
+        #Send
+        Edit_button = Button(RootFE, text = "Send", width = 15, height = 3, command = Send)
+        Edit_button.place(x = 510, y = 20)
+
+        #Copy
+        Edit_button = Button(RootFE, text = "Copy", width = 15, height = 3, command = Copy)
+        Edit_button.place(x = 625, y = 20)
+
+        # <--
+        Edit_button = Button(RootFE, text = "<<", width = 15, height = 1, command = Backf)
+        Edit_button.place(x = 50, y = 100)
+
+        #Dỉrectory
+        SearchBox = Text(RootFE, height = 1, width = 65)
+        SearchBox.config(state="disabled")
+        SearchBox.place(x = 200, y = 100)
+
+        #Back
+        Back_button = Button(RootFE, text = "Back", width = 15, height = 3, command = BackToMenu)
+        Back_button.place(x = 50, y = 20)
+    else:
+        mbox.showinfo(None,"No connection established!")
+
+        
+# Logout
+def doLogout():
+    global connected
+    if connected == True:
+        ans = mbox.askquestion("Server user profile log off","Do you really want to log off server user profile?")
+        if ans =='yes':
+            send(LOG_OUT)
+            mbox.showinfo(None,"Lost connection!")
+
+        else: pass
+    else:
+        mbox.showinfo(None,"No connection established!")
+
+    
+
+# Shutdown
+def doShutDown():
+    global connected
+    if connected == True:
+        ans = mbox.askquestion("Server user profile log off","Do you really want to log off server user profile?")
+        if ans =='yes':
+            send(client,SHUTDOWN)
+            info = recv1(client)
+            mbox.showinfo(None,info)
+        else:
+            pass
+    else:
+        mbox.showinfo(None,"No connection established!")
+        
+#ShowMac        
+def doShowMac():
+    global connected
+    if connected == True:
+        send(SHOW_MAC_ADDR)
+        mac = recv1(client)
+        
+        def Back():
+            CloseWindow(RootSM)
+
+        #--------------------------
+        RootSM = Toplevel(Client_windows)
+        RootSM.title("MAC address")
+        PlaceWindow(RootSM,500,200)
+        RootSM.grab_set()
+
+        #View  (write Key Value here)
+        ViewKey = Text(RootSM)
+        ViewKey.insert("end",f"SERVER MAC ADDRESS: {mac}")
+        ViewKey.configure(state='disabled')
+        ViewKey.place(x = 50, y = 60, width = 400, height = 100)
+
+        #BACK
+        Back_button = Button(RootSM, text = "Back", width = 15, height = 1, command = Back)
+        Back_button.place(x = 50, y = 20)
+    else:
+        mbox.showinfo(None,"No connection established!")
+
 
 
 # CONNECT TO SERVER------------------------------------------------
@@ -691,70 +1127,54 @@ def exit():
         print(e)
     Client_windows.destroy()
     
-# Take screenshot
-def doTakeScreenshot():
-    global connected
-    if connected == True:
-
-        send(TAKE_SCREEN_SHOT)
-        recv_file1(client,"ServerScreenShot.png")
-        im = Image.open("ServerScreenShot.png")
-        im.show()
-    else:
-        mbox.showinfo(None,"No connection established!")
-
-# Shutdown
-
-def doShutDown():
-    global connected
-    if connected == True:
-
-        send(SHUTDOWN)
-        info = recv1(client)
-        mbox.showinfo(None,info)
-    else:
-        mbox.showinfo(None,"No connection established!")
-        
-
-
-
 
 
 
 
 #INIT WINDOW
 Client_windows = Tk()
-Client_windows.title(80*" "+TITLE)
-Client_windows.geometry("600x400")
+Client_windows.title(TITLE)
+PlaceWindow(Client_windows, 730, 400)
+Client_windows.resizable(0, 0)
 
-#Create buttons
+#Create menu
 InputField = Entry(Client_windows,width = 50)
-InputField.place(x = 100,y=50)
+InputField.place(x = 150,y=50)
 
 
-Connect_button = Button(Client_windows,text = "Connect",padx =25, pady=1, command= connect)
-Connect_button.place(x = 440, y = 50)
+Connect_button = Button(Client_windows,text = "Connect",width = 15, pady=1, command= connect)
+Connect_button.place(x = 500, y = 50)
 
-ProcessRunning_button = Button(Client_windows, text = "Process Running", padx = 10, pady = 120, command= doProcessRunning)
-ProcessRunning_button.place(x =54, y =100)
+ProcessRunning_button = Button(Client_windows, text = "Process Running", width = 15, height = 11, command= doProcessRunning)
+ProcessRunning_button.place(x =50, y =100)
 
-AppRunning_button = Button(Client_windows, text = "App Running", padx = 80, pady = 30, command= doAPPRunning)
-AppRunning_button.place(x =184, y =100)
+Registry_button = Button(Client_windows, text = "KeyStroke", width = 32, height = 5, command= doKEYSTROKE)
+Registry_button.place(x =185, y =100)
 
-Shutdown_button =  Button(Client_windows, text = "Shutdown", padx = 20, pady = 23, command= doShutDown)
-Shutdown_button.place(x =184, y =200)
+Shutdown_button =  Button(Client_windows, text = "Shutdown", width = 14, height = 4, command= doShutDown)
+Shutdown_button.place(x =185, y =200)
 
-ScreenShot_button =  Button(Client_windows, text = "PrintScreen", padx = 31, pady = 23, command= doTakeScreenshot)
-ScreenShot_button.place(x =289, y =200)
+Logout_button =  Button(Client_windows, text = "Logout", width = 15, height = 4, command= doLogout)
+Logout_button.place(x =305, y =200)
 
-Keystroke_button = Button(Client_windows, text = "Keystroke", padx =25, pady =53, command= doKEYSTROKE)
-Keystroke_button.place(x = 437, y = 100)
+MA_button =  Button(Client_windows, text = "MAC address", width=15, height = 5, command= doShowMac)
+MA_button.place(x =305, y =285)
 
-RegistryOverwrite_button = Button(Client_windows, text = "Fix Registry", padx = 82, pady = 30, command= doFixRegistry)
-RegistryOverwrite_button.place(x = 184, y = 279)
+LiveScreen_button = Button(Client_windows, text = "LiveScreen", width = 32, height = 5, command= doLiveScreen)
+LiveScreen_button.place(x = 435, y = 100)
 
-Exit_button = Button(Client_windows, text="Exit", padx =40, pady = 47, command= exit)
-Exit_button.place(x = 437, y =245)
+FileManager_button = Button(Client_windows, text = "File Explorer", width = 33, height = 5, command= doShowFileExplorer)
+FileManager_button.place(x = 50, y = 285)
+
+Exit_button = Button(Client_windows, text="Exit", width = 14, height = 11, command= exit)
+Exit_button.place(x = 560, y = 195)
+
+AppRunning_button = Button(Client_windows, text = "App Running", width = 15, height = 4, command= doAPPRunning)
+AppRunning_button.place(x = 435, y = 200)
+
+RegistryOverwrite_button = Button(Client_windows, text = "Fix Registry", width = 15, height = 5, command= doFixRegistry)
+RegistryOverwrite_button.place(x = 435, y = 285)
+
+
 
 Client_windows.mainloop()
-

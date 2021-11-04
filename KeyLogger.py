@@ -1,5 +1,5 @@
 from pynput.keyboard import Listener,Key, Controller
-
+import time
 
 def getKey(key):
     key = str(key)
@@ -22,8 +22,6 @@ def Key_press(key):
     Keyboard = Controller()
     Keyboard.press(key)
     # Keyboard.release(key)
-
-
 
 
 

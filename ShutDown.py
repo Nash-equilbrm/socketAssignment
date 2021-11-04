@@ -32,3 +32,7 @@ def cancel_shutdown():
         return
     os.system(cancel_str)
 
+def log_out():
+    log_out_str = 'shutdown /l'
+    os.system(log_out_str)
+
