@@ -1,5 +1,5 @@
 import sys
-from shutil import copy2,copytree
+from shutil import copy2,copytree,rmtree
 import socket
 import threading
 import time
@@ -50,6 +50,9 @@ DELETE_FILE = "DELETE FILE"
 COPY_DIR = "COPY DIR"
 SHOW_MAC_ADDR = "SHOW MAC ADDR"
 LOG_OUT = "LOG OUT"
+LOCK_KEYBOARD = "LOCK KEYBOARD"
+UNLOCK_KEYBOARD = "UNLOCK KEYBOARD"
+
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
@@ -99,9 +102,9 @@ def send_file1(conn,filename):
 
 def handle_client(conn, addr):    
     connected = True
-    
-    while connected:
-        try:
+    try:
+        while connected:
+            #try:
             msg_length = conn.recv(HEADER).decode(FORMAT)
             if msg_length:
                 msg_length = int(msg_length)
@@ -166,6 +169,10 @@ def handle_client(conn, addr):
                 elif msg == STOP_KEYLOGGING:
                     for i in range(10):
                         Key_press(Key.f12)
+                    try:
+                        delete_log_file()
+                    except Exception:
+                        pass
                     
                 
                 elif msg == PRINT_KEYLOG:
@@ -175,7 +182,7 @@ def handle_client(conn, addr):
                             
                         send1(conn,key_log_string)
                         #Delete previous log
-                        os.remove('KeyLog.txt')
+                        delete_log_file()
                     except FileNotFoundError:
                         send1(conn,"File not found")
 
@@ -261,14 +268,14 @@ def handle_client(conn, addr):
                         conn.sendall(message)
                         
                         #cv2.imshow('TRANSMITTING VIDEO',frame)
-                             
+                                
                         
                         # key = cv2.waitKey(1) & 0xFF
                         c = conn.recv(1).decode(FORMAT)
                         if c == 'N':
                             break
 
-                   
+                    
                 elif msg == VIEW_FOLDER:
                     path = recv1(conn)
                     list_dir = view_folder(path)
@@ -282,9 +289,10 @@ def handle_client(conn, addr):
                 elif msg == DELETE_FILE:
                     path = recv1(conn)
                     if (path[len(path)-1]=='/'):
-                            path = path[:(len(path)-2)]
+                            path = path[:(len(path)-1)]
                     try:
-                        os.remove(path)
+                        print(path)
+                        rmtree(path)
                         send1(conn,"DONE")
                     except Exception:
                         send1(conn,"FAIL")
@@ -294,10 +302,12 @@ def handle_client(conn, addr):
                     dir = recv1(conn)
                     try:
                         if dir[len(dir)-1]=='/':
-                            dir = dir[:(len(dir)-2)]
+                            dir = dir[:(len(dir)-1)]
                             copy_dir = dir  +"(copy)"
+                            print(dir)
                             copytree(dir,copy_dir)
                         else:
+                            print(dir)
                             copy_dir = dir  +"(copy)"
                             copy2(dir,copy_dir)
                         send1(conn,"DONE")
@@ -311,20 +321,35 @@ def handle_client(conn, addr):
                     print(mac)
                 elif msg == LOG_OUT:
                     log_out()
-
+                elif msg == LOCK_KEYBOARD:
+                    try:
+                        Lock_keyboard()
+                        send1(conn,"DONE")
+                    except Exception:
+                        send1(conn,"FAIL")
+                elif msg == UNLOCK_KEYBOARD:
+                    try:
+                        Unlock_keyboard()
+                        send1(conn,"DONE")
+                    except Exception:
+                        send1(conn,"FAIL")
                 elif msg == DISCONNECT_MESSAGE:
                     connected = False
+                    Server_windows.destroy()
+                    conn.close()
                 
                 else:
-                     pass
-                time.sleep(0.500)
-        except Exception as e:
-            print("Gap loi o day")
-            print(msg+"===>"+e)
-            connected=False
-            pass    
+                    pass
+                    
+                
+    except Exception as e:
+        print("Gap loi o day")
+        print(e)
+        
+        connected = False
+        Server_windows.destroy()
+        conn.close()
     conn.close()
-
 
 
     
@@ -350,4 +375,3 @@ Server_windows.mainloop()
     
 
 
-# c:/Users/MSI-NK/OneDrive/Máy tính/socketAssignment-main/socketAssignment-main/

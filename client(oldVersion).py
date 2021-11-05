@@ -1,12 +1,10 @@
 import os
 from tkinter import *
-from tkinter.font import BOLD
 import tkinter.messagebox as mbox 
 from tkinter import ttk, filedialog
 import tkinter as tk
 import socket
 import threading
-from typing import Sized
 import numpy as np
 import cv2, pickle,struct
 import PIL.Image, PIL.ImageTk
@@ -171,10 +169,9 @@ def doProcessRunning():
             RootPR_KILL.geometry("400x50")
             RootPR_KILL.resizable(0, 0)
             RootPR_KILL.grab_set()
-            RootPR_KILL.configure(background="#89d6fb")
 
             entry = Entry(RootPR_KILL, width = 40)
-            buttonPR_KILL_InSide = Button(RootPR_KILL, bg = '#02a9f7', text = "KILL",width=10, height = 1)
+            buttonPR_KILL_InSide = Button(RootPR_KILL, text = "KILL",width=10, height = 1)
             buttonPR_KILL_InSide.bind("<Button-1>", KILL_PR_EXECUTE)
 
 
@@ -213,12 +210,12 @@ def doProcessRunning():
 
             RootPR_START.title(40*" "+"START")
             RootPR_START.geometry("400x50")
-            RootPR_START.configure(background="#89d6fb")
+            
             RootPR_START.resizable(0, 0)
             RootPR_START.grab_set()
             
             entry = Entry(RootPR_START, width = 40)
-            buttonPR_START_InSide = Button(RootPR_START, bg ='#02a9f7',text = "START",width=10, height = 1, command = START_PR_EXECUTE)
+            buttonPR_START_InSide = Button(RootPR_START, text = "START",width=10, height = 1, command = START_PR_EXECUTE)
 
             entry.place(x = 20, y = 15)
             buttonPR_START_InSide.place(x = 280, y = 15)
@@ -230,29 +227,29 @@ def doProcessRunning():
         RootPR = Toplevel(Client_windows)
         RootPR.title("Process")
         PlaceWindow(RootPR, 730, 400)
-        RootPR.configure(background="#89d6fb")
         RootPR.grab_set()
         RootPR.resizable(0,0)
         
-               
+
+        
         #KILL
-        buttonPR_KILL = Button(RootPR,  bg = '#02a9f7', text = 'KILL', width = 15, height = 4, command= KILL_PR)
+        buttonPR_KILL = Button(RootPR, text = 'KILL', width = 15, height = 4, command= KILL_PR)
         buttonPR_KILL.place(x = 175, y = 20)
 
         #SHOW
-        buttonPR_SHOW = Button(RootPR, bg = '#02a9f7', text = 'SHOW', width = 15, height = 4, command = SHOW_PR)
+        buttonPR_SHOW = Button(RootPR, text = 'SHOW', width = 15, height = 4, command = SHOW_PR)
         buttonPR_SHOW.place(x = 290, y = 20)
 
         #DELETE
-        buttonPR_SHOW = Button(RootPR, bg = '#02a9f7', text = 'DELETE', width = 15, height = 4, command = DELETE_PR)
+        buttonPR_SHOW = Button(RootPR, text = 'DELETE', width = 15, height = 4, command = DELETE_PR)
         buttonPR_SHOW.place(x = 405, y = 20)
 
         #Start
-        buttonPR_SHOW = Button(RootPR, bg = '#02a9f7', text = 'START', width = 15, height = 4, command= START_PR)
+        buttonPR_SHOW = Button(RootPR, text = 'START', width = 15, height = 4, command= START_PR)
         buttonPR_SHOW.place(x = 520, y = 20) 
 
         #BACK
-        Back_button = Button(RootPR, bg = '#02a9f7', text = "BACK", width = 15, height = 4, command = Back)
+        Back_button = Button(RootPR, text = "BACK", width = 15, height = 4, command = Back)
         Back_button.place(x = 60, y = 20)
 
         #Table
@@ -281,9 +278,10 @@ def doKEYSTROKE():
 
         def HOOK():
             global hooked
-            if hooked == False:
+            if hooked == False: 
                 hooked=True
                 send1(client,KEYLOGGING)
+            else : pass
             
         def A():
             threading.Thread(target=HOOK).start()
@@ -341,9 +339,7 @@ def doKEYSTROKE():
             else:
                 mbox.showinfo(None,"Error occurred while trying to unlock server's keyboard")
 
-        def disable_event():
-            send(STOP_KEYLOGGING)
-            CloseWindow(RootK)
+
 
         #-----------------------------------------------------------------------------------    
 
@@ -352,42 +348,38 @@ def doKEYSTROKE():
         PlaceWindow(RootK, 730, 400)
         RootK.grab_set()
         RootK.resizable(0,0)
-        RootK.configure(background="#89d6fb")
 
         #HOOK
-        buttonK_HOOK = Button(RootK, bg = '#02a9f7',text = 'Hook',width = 15, height = 3, command = A)
+        buttonK_HOOK = Button(RootK, text = 'Hook',width = 15, height = 3, command = A)
         buttonK_HOOK.place(x = 60, y = 20)
 
         #UNHOOK
-        buttonK_UNHOOK = Button(RootK, bg = '#02a9f7',text = 'UnHook', width = 15, height = 3, command= B)
+        buttonK_UNHOOK = Button(RootK, text = 'UnHook', width = 15, height = 3, command= B)
         buttonK_UNHOOK.place(x = 175, y = 20)
 
         #PRINT
-        buttonK_PRINT = Button(RootK, bg = '#02a9f7',text = 'Print', width = 15, height = 3, command= C)
+        buttonK_PRINT = Button(RootK, text = 'Print', width = 15, height = 3, command= C)
         buttonK_PRINT.place(x = 520, y = 20)
 
         #DELETE
-        buttonK_DELETE = Button(RootK, bg = '#02a9f7', text = 'Lock Keyboard', width = 15, height = 3, command = LockKeyboard)
+        buttonK_DELETE = Button(RootK, text = 'Lock Keyboard', width = 15, height = 3, command = LockKeyboard)
         buttonK_DELETE.place(x = 290, y = 20)
 
         #BACK
-        Back_button = Button(RootK, bg = '#02a9f7', text = "Unlock Keyboard", width = 15, height = 3, command = unLockKeyboard)
+        Back_button = Button(RootK, text = "Unlock Keyboard", width = 15, height = 3, command = unLockKeyboard)
         Back_button.place(x = 405, y = 20)
         
         #BACK
-        Back_button = Button(RootK, bg = '#ffffff', text = "Back", width = 15, height = 2, command = Back)
+        Back_button = Button(RootK, text = "Back", width = 15, height = 2, command = Back)
         Back_button.place(x = 175, y = 350)
 
         #DELETE
-        buttonK_DELETE = Button(RootK, bg = '#ffffff', text = 'Delete', width = 15, height = 2, command= D)
+        buttonK_DELETE = Button(RootK, text = 'Delete', width = 15, height = 2, command= D)
         buttonK_DELETE.place(x = 405, y = 350)       
 
         #TABLE
         text = Text(RootK)
         text.place(x = 60, y = 90, width = 575, height = 250)
-        text.config(state="disabled")
-        RootK.protocol("WM_DELETE_WINDOW", disable_event)
-
     else:
         mbox.showinfo(None,"No connection established!")
 
@@ -417,10 +409,9 @@ def doAPPRunning():
             RootAR_KILL.geometry("400x50")
             RootAR_KILL.resizable(0, 0)
             RootAR_KILL.grab_set()
-            RootAR_KILL.configure(background="#89d6fb")
 
             entry = Entry(RootAR_KILL, width = 40)
-            buttonAR_KILL_InSide = Button(RootAR_KILL, bg = '#02a9f7', text = "KILL",width=10, height = 1, command= KILL_PR_EXECUTE)
+            buttonAR_KILL_InSide = Button(RootAR_KILL, text = "KILL",width=10, height = 1, command= KILL_PR_EXECUTE)
 
             entry.place(x = 20, y = 15)
             buttonAR_KILL_InSide.place(x = 280, y = 15)
@@ -457,10 +448,9 @@ def doAPPRunning():
             RootAR_START.geometry("400x50")
             RootAR_START.resizable(0, 0)
             RootAR_START.grab_set()
-            RootAR_START.configure(background="#89d6fb")
 
             entry = Entry(RootAR_START, width = 40)
-            buttonAR_START_InSide = Button(RootAR_START, bg = '#02a9f7',text = "START",width=10, height = 1, command= START_AR_EXECUTE)
+            buttonAR_START_InSide = Button(RootAR_START, text = "START",width=10, height = 1, command= START_AR_EXECUTE)
 
             entry.place(x = 20, y = 15)
             buttonAR_START_InSide.place(x = 280, y = 15)
@@ -473,26 +463,25 @@ def doAPPRunning():
         RootAR.grab_set()
         PlaceWindow(RootAR, 730, 400)
         RootAR.resizable(0,0)
-        RootAR.configure(background="#89d6fb")
 
         #KILL
-        buttonAR_KILL = Button(RootAR, bg = '#02a9f7', text = 'KILL', width = 15, height = 4,command= KILL_AR)
+        buttonAR_KILL = Button(RootAR, text = 'KILL', width = 15, height = 4,command= KILL_AR)
         buttonAR_KILL.place(x = 175, y = 20)
         #SHOW
-        buttonPR_SHOW = Button(RootAR, bg = '#02a9f7',text = 'SHOW', width = 15, height = 4, command= SHOW_AR)
+        buttonPR_SHOW = Button(RootAR, text = 'SHOW', width = 15, height = 4, command= SHOW_AR)
         buttonPR_SHOW.place(x = 290, y = 20)
         #DELETE
-        buttonPR_SHOW = Button(RootAR, bg = '#02a9f7',text = 'DELETE', width = 15, height = 4, command= DELETE_AR)
+        buttonPR_SHOW = Button(RootAR, text = 'DELETE', width = 15, height = 4, command= DELETE_AR)
         buttonPR_SHOW.place(x = 405, y = 20)
         #Start
-        buttonPR_SHOW = Button(RootAR, bg = '#02a9f7', text = 'START', width = 15, height = 4, command= START_AR)
+        buttonPR_SHOW = Button(RootAR, text = 'START', width = 15, height = 4, command= START_AR)
         buttonPR_SHOW.place(x = 520, y = 20)
         #Table
         tree =ttk.Treeview(RootAR, column=("c1", "c2", "c3"), show='headings')
         vsb = ttk.Scrollbar(RootAR, orient="vertical", command=tree.yview)
 
         #BACK
-        Back_button = Button(RootAR, bg = '#02a9f7', text = "Back", width = 15, height = 4, command = Back)
+        Back_button = Button(RootAR, text = "Back", width = 15, height = 4, command = Back)
         Back_button.place(x = 60, y = 20)
         
         tree.bind('<Button-1>', "break")
@@ -685,14 +674,14 @@ def doFixRegistry():
         RootFR.grab_set()
         PlaceWindow(RootFR, 500, 420)
         RootFR.resizable(0,0)
-        RootFR.configure(background='#d4f0fc')
+
 
         #Browser---------------
         file_directory = Entry(RootFR)
         file_directory.place(x = 10, y = 10, width = 370)
         file_directory.insert('end', 'Path...')
 
-        Button_Browser = Button(RootFR, bg = '#ffffff',text = "Browser", command= doBrowser)
+        Button_Browser = Button(RootFR, text = "Browser", command= doBrowser)
         Button_Browser.place(x = 390, y = 10, width = 100)
         
 
@@ -701,11 +690,11 @@ def doFixRegistry():
         textBox.place(x = 10, y = 40, width = 370, height = 100)
         textBox.insert('end', "Message")
         
-        Button_SendMessage = Button(RootFR, bg = '#ffffff', text = "Send Message", command= doSendMessenger)
+        Button_SendMessage = Button(RootFR, text = "Send Message", command= doSendMessenger)
         Button_SendMessage.place(x = 390, y = 40, width = 100, height = 100)
 
         #Fix------------------
-        Label_Fix = Label(RootFR, bg = '#89d6fb', text  = "Fix Value " + 85*'-')
+        Label_Fix = Label(RootFR, text  = "Fix Value " + 85*'-')
         Label_Fix.place(x = 10, y = 145)
 
         #ChooseFunction
@@ -745,14 +734,14 @@ def doFixRegistry():
         DataType.bind('<<ComboboxSelected>>', SelectFunction)
 
         #Send, delete button
-        Button_Send = Button(RootFR, bg = '#ffffff', text = 'Send', command=Send)
+        Button_Send = Button(RootFR, text = 'Send', command=Send)
         Button_Send.place (x = 200, y = 360, width = 100)
 
-        Button_Delete = Button(RootFR,bg = '#ffffff', text = 'Delete', command= Delete)
+        Button_Delete = Button(RootFR, text = 'Delete', command= Delete)
         Button_Delete.place (x = 320, y = 360, width = 100) 
 
         #Back
-        Button_Back = Button(RootFR, bg = '#ffffff',text = 'Back', command = Back)
+        Button_Back = Button(RootFR, text = 'Back', command = Back)
         Button_Back.place(x = 80, y = 360, width = 100 )
 
     else:
@@ -770,43 +759,22 @@ def doLiveScreen():
             CloseWindow(RootLS)
 
         
-        #send(LIVE_SCREEN)
+        
+    
         RootLS = Toplevel(Client_windows)
         RootLS.title("LiveScreen")
-        
 
-        windowWidth = 780
-        windowHeight = 600
+        windowWidth = 1100
+        windowHeight = 700
+
         PlaceWindow(RootLS, windowWidth, windowHeight)        #Scale the window here
         RootLS.resizable(0, 0)
         RootLS.grab_set()
 
-
-        #Make Color
-        canvas = Canvas(RootLS, width = 780, height = 600 )
-        icon = PhotoImage( file = "remote-control.png" )
-        icon = icon.subsample(7)
-        IconLabel = Label(RootLS, image=icon)
-        IconLabel.image = icon
-        IconLabel.place (x = 60, y = 10)
-        Name = Label(RootLS, text = "REMOTE PC CONTROLLER", fg = '#ffffff', bg = '#02577a')
-        Name.place(x = 30, y = 100)
-        canvas.create_rectangle(0, 0, 200, 125,
-                    fill="#02577a" )
-        canvas.create_rectangle(200, 0, 780, 125,
-                    fill="#89d6fb")
-        canvas.create_rectangle(0, 125, 780, 700,
-                    fill="#d4f0fc")
-        canvas.create_rectangle(50, 175, 730, 570,
-                    fill="#ffffff", fg = None )
-        canvas.place( x = 0, y = 0)
-
-
-
-
+        
         app = Frame(RootLS, bg="white")
         app.grid()
-        app.place(x= 85, y = 180)
+        app.place(x= 200, y = 60)
         # Create a label in the frame
         lmain = Label(app)
         lmain.grid()
@@ -820,6 +788,7 @@ def doLiveScreen():
         # function for video streaming
         def video_stream():
             RootLS.protocol("WM_DELETE_WINDOW", disable_event)
+
 
                 
             data = b""
@@ -854,18 +823,27 @@ def doLiveScreen():
 
         
 
-        Back_button = Button(RootLS, text = "Back", width = 30, height = 2, command = Back)
-        Back_button.place(x = 370, y = 35)
+        Back_button = Button(RootLS, text = "Back", width = 25, height = 2, command = Back)
+        Back_button.place(x = 200, y = 30)
+        
         
 
         thread = threading.Thread(target=video_stream)
         thread.start()
-        #video_stream()
+        # video_stream()
+        
+                
+                
+        
         RootLS.mainloop()
     else:
         mbox.showinfo(None,"No connection established!")
 
 
+    
+    
+    
+    
 
 #ShowFileManager------------------------------------------------------------------------------------------
 current_file=""
@@ -877,18 +855,13 @@ def doShowFileExplorer():
         def BackToMenu():
             CloseWindow(RootFE)
         def Delete():
-            global current_file
-            global current_directory
             send(DELETE_FILE)
             dir=""
             if(current_file ==""):
                 dir = current_directory
-            else: 
-                dir = current_file
-                current_file=""
+            else: dir = current_file
             send1(client,dir)
             print(dir)
-            current_directory = current_directory[:(current_directory.rfind("/")+1)]
             reply = recv1(client)
             if reply == "DONE":
                 tv.delete(*tv.get_children())
@@ -897,6 +870,7 @@ def doShowFileExplorer():
                 send(current_directory)
 
                 list_len = int(recv1(client))
+                
                 for i in range(list_len):
                     name = recv1(client)
                     is_dir = int(recv1(client))
@@ -905,18 +879,24 @@ def doShowFileExplorer():
                     else:
                         tv.insert('','end', text=name)
                 mbox.showinfo(None,f"Deleted {dir}.")
-                
-                
             elif reply == "FAIL":
                 mbox.showinfo(None,f"Error occurred while trying to delete {dir}.")
+
+        def Add():
+            pass
+
+        def Edit():
+            pass
+
+        def Send():
+            pass
 
         def Copy():
             send(COPY_DIR)
             dir=""
             if(current_file ==""):
                 dir = current_directory
-            else: 
-                dir = current_file
+            else: dir = current_file
             send1(client,dir)
             reply = recv1(client)
             if reply == "DONE":
@@ -1003,7 +983,8 @@ def doShowFileExplorer():
                 
                 SearchBox.config(state="normal")
                 SearchBox.insert('end',dir)
-                SearchBox.insert('end','/')
+                if(list_len!=0):
+                    SearchBox.insert('end','/')
                 SearchBox.config(state="disabled")
                 
 
@@ -1015,12 +996,7 @@ def doShowFileExplorer():
                     else:
                         tv.insert('','end', text=name)
             else:
-                if current_file=="":
-                    current_file = current_directory + dir
-                    SearchBox.config(state="normal")
-                    SearchBox.insert('end',dir)
-                
-                    SearchBox.config(state="disabled")
+                current_file = current_directory + dir
             
         
         #Init TreeView
@@ -1029,7 +1005,6 @@ def doShowFileExplorer():
         PlaceWindow(RootFE,800, 550)
         RootFE.resizable(0, 0)
         RootFE.grab_set()
-        RootFE.configure(background= '#d4f0fc')
 
         tv = ttk.Treeview(RootFE,show='tree')
         ybar = tk.Scrollbar(RootFE,orient=tk.VERTICAL, command=tv.yview)
@@ -1049,24 +1024,36 @@ def doShowFileExplorer():
         ybar.place(x = 750, y = 150, height = 350)
 
         #Delete    
-        Del_button = Button(RootFE, bg = '#ffffff', text = "Delete", width = 15, height = 3, command = Delete)
-        Del_button.place(x = 350, y = 20)
+        Del_button = Button(RootFE, text = "Delete", width = 15, height = 3, command = Delete)
+        Del_button.place(x = 165, y = 20)
+
+        #Add
+        Add_button = Button(RootFE, text = "Add", width = 15, height = 3, command = Add)
+        Add_button.place(x = 280, y = 20)
+
+        #Edit
+        Edit_button = Button(RootFE, text = "Edit", width = 15, height = 3, command = Edit)
+        Edit_button.place(x = 395, y = 20)
+
+        #Send
+        Edit_button = Button(RootFE, text = "Send", width = 15, height = 3, command = Send)
+        Edit_button.place(x = 510, y = 20)
 
         #Copy
-        Edit_button = Button(RootFE, bg = '#ffffff', text = "Copy", width = 15, height = 3, command = Copy)
+        Edit_button = Button(RootFE, text = "Copy", width = 15, height = 3, command = Copy)
         Edit_button.place(x = 625, y = 20)
 
         # <--
-        Edit_button = Button(RootFE, bg = '#ffffff', text = "<<", width = 15, height = 1, command = Backf)
+        Edit_button = Button(RootFE, text = "<<", width = 15, height = 1, command = Backf)
         Edit_button.place(x = 50, y = 100)
 
         #Dỉrectory
-        SearchBox = Text(RootFE, height = 2, width = 65)
+        SearchBox = Text(RootFE, height = 1, width = 65)
         SearchBox.config(state="disabled")
-        SearchBox.place(x = 200, y = 80)
+        SearchBox.place(x = 200, y = 100)
 
         #Back
-        Back_button = Button(RootFE, bg = '#ffffff', text = "Back", width = 15, height = 3, command = BackToMenu)
+        Back_button = Button(RootFE, text = "Back", width = 15, height = 3, command = BackToMenu)
         Back_button.place(x = 50, y = 20)
     else:
         mbox.showinfo(None,"No connection established!")
@@ -1116,7 +1103,6 @@ def doShowMac():
         RootSM.title("MAC address")
         PlaceWindow(RootSM,500,200)
         RootSM.grab_set()
-        RootSM.configure(background= '#d4f0fc')
 
         #View  (write Key Value here)
         ViewKey = Text(RootSM)
@@ -1125,7 +1111,7 @@ def doShowMac():
         ViewKey.place(x = 50, y = 60, width = 400, height = 100)
 
         #BACK
-        Back_button = Button(RootSM, bg = '#ffffff', text = "Back", width = 15, height = 1, command = Back)
+        Back_button = Button(RootSM, text = "Back", width = 15, height = 1, command = Back)
         Back_button.place(x = 50, y = 20)
     else:
         mbox.showinfo(None,"No connection established!")
@@ -1161,82 +1147,46 @@ def exit():
 #INIT WINDOW
 Client_windows = Tk()
 Client_windows.title(TITLE)
-PlaceWindow(Client_windows, 950, 600)
+PlaceWindow(Client_windows, 730, 400)
 Client_windows.resizable(0, 0)
 
-# title
-canvas = Canvas(Client_windows, width = 950, height = 600 )
-
-icon = PhotoImage( file = "remote-control.png" )
-icon = icon.subsample(7)
-IconLabel = Label(Client_windows, image=icon)
-IconLabel.image = icon
-IconLabel.place (x = 60, y = 10)
-
-Name = Label(Client_windows, text = "REMOTE PC CONTROLLER", fg = '#ffffff', bg = '#02577a')
-Name.place(x = 30, y = 100)
-
-
-canvas.create_rectangle(0, 0, 200, 125,
-            fill="#02577a" )
-
-canvas.create_rectangle(200, 0, 950, 125,
-            fill="#89d6fb")
-
-canvas.create_rectangle(0, 125, 950, 600,
-            fill="#d4f0fc")
-
-canvas.create_rectangle(50, 175, 875, 565,
-            fill="#ffffff", fg = None )
-
-canvas.place( x = 0, y = 0)
-
-
-def disable_event():
-    send(DISCONNECT_MESSAGE)
-    Client_windows.destroy()
-
-
 #Create menu
-InputField = Entry(Client_windows, width = 30)
-InputField.place(x = 250, y = 50)
+InputField = Entry(Client_windows,width = 50)
+InputField.place(x = 150,y=50)
 
 
-Connect_button = Button(Client_windows, bg = '#ffffff', text = "Connect",width = 18, height = 2, command= connect)
-Connect_button.place(x = 450, y = 40)
+Connect_button = Button(Client_windows,text = "Connect",width = 15, pady=1, command= connect)
+Connect_button.place(x = 500, y = 50)
 
-ProcessRunning_button = Button(Client_windows, bg = '#d4f0fc',  text = "Process \n Running",width = 15, height = 13, command= doProcessRunning)
-ProcessRunning_button.place(x = 100, y = 220)
+ProcessRunning_button = Button(Client_windows, text = "Process Running", width = 15, height = 11, command= doProcessRunning)
+ProcessRunning_button.place(x =50, y =100)
 
-Registry_button = Button(Client_windows, bg = '#89d6fb', text = "KeyStroke", width = 35, height = 6, command= doKEYSTROKE)
-Registry_button.place(x = 235, y = 220)
+Registry_button = Button(Client_windows, text = "KeyStroke", width = 32, height = 5, command= doKEYSTROKE)
+Registry_button.place(x =185, y =100)
 
-Shutdown_button =  Button(Client_windows, bg = '#d4f0fc', text = "Shutdown", width = 16, height = 5, command= doShutDown)
-Shutdown_button.place(x = 235, y = 340)
+Shutdown_button =  Button(Client_windows, text = "Shutdown", width = 14, height = 4, command= doShutDown)
+Shutdown_button.place(x =185, y =200)
 
-Logout_button =  Button(Client_windows, bg = '#02a9f7', text = "Logout", width = 25, height = 5, command= doLogout)
-Logout_button.place(x = 645, y = 430)
+Logout_button =  Button(Client_windows, text = "Logout", width = 15, height = 4, command= doLogout)
+Logout_button.place(x =305, y =200)
 
-MA_button =  Button(Client_windows, bg = '#89d6fb', text = "MAC address", width = 15, height = 11, command= doShowMac)
-MA_button.place(x = 375, y = 340)
+MA_button =  Button(Client_windows, text = "MAC address", width=15, height = 5, command= doShowMac)
+MA_button.place(x =305, y =285)
 
-LiveScreen_button = Button(Client_windows, bg = '#89d6fb', text = "LiveScreen", width = 15, height = 19, command= doLiveScreen)
-LiveScreen_button.place(x = 510, y = 220)
+LiveScreen_button = Button(Client_windows, text = "LiveScreen", width = 32, height = 5, command= doLiveScreen)
+LiveScreen_button.place(x = 435, y = 100)
 
-FileManager_button = Button(Client_windows, bg = '#d4f0fc', text = "File Explorer", width = 35, height = 4, command= doShowFileExplorer)
-FileManager_button.place(x = 100, y = 440)
+FileManager_button = Button(Client_windows, text = "File Explorer", width = 33, height = 5, command= doShowFileExplorer)
+FileManager_button.place(x = 50, y = 285)
 
-Exit_button = Button(Client_windows, bg = '#ffffff', text="Exit", width = 22, height = 3, command= exit)
-Exit_button.place(x = 720, y = 36)
+Exit_button = Button(Client_windows, text="Exit", width = 14, height = 11, command= exit)
+Exit_button.place(x = 560, y = 195)
 
-AppRunning_button = Button(Client_windows, bg = '#89d6fb', text = "App \n Running", width = 10, height = 12, command= doAPPRunning)
-AppRunning_button.place(x = 645, y = 220)
+AppRunning_button = Button(Client_windows, text = "App Running", width = 15, height = 4, command= doAPPRunning)
+AppRunning_button.place(x = 435, y = 200)
 
-RegistryOverwrite_button = Button(Client_windows, bg = '#02a9f7',  text = "Fix \n Registry", width = 10, height = 12, command= doFixRegistry)
-RegistryOverwrite_button.place(x = 745, y = 220)
-
-Client_windows.protocol("WM_DELETE_WINDOW", disable_event)
-
+RegistryOverwrite_button = Button(Client_windows, text = "Fix Registry", width = 15, height = 5, command= doFixRegistry)
+RegistryOverwrite_button.place(x = 435, y = 285)
 
 
 
